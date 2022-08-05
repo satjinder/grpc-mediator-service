@@ -1,0 +1,25 @@
+syntax = "proto3";
+package gservice;
+
+option go_package = "github.com/satjinder/med8r/gprotos;gprotos";
+
+import "google/protobuf/descriptor.proto";
+import "google/protobuf/any.proto";
+
+extend google.protobuf.MethodOptions {
+  optional ExpectedOperations entitlements = 51234;
+}
+
+service genericService {
+  rpc Call(google.protobuf.Any) returns (google.protobuf.Any) {
+    option (entitlements) = {
+        operations: ["appointments:read"]
+    };
+  }
+}
+
+
+
+message ExpectedOperations {
+  repeated string operations = 1;
+}

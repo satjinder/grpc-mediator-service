@@ -1,3 +1,5 @@
+// https://stackoverflow.com/questions/71320369/grpc-service-with-generic-proto-request-data-in-golang
+
 package main
 
 import (
@@ -7,8 +9,10 @@ import (
 	"log"
 	"net"
 
+	gpb "github.com/satjinder/med8r/gprotos"
 	pb "github.com/satjinder/med8r/protos"
 	"google.golang.org/grpc"
+	"google.golang.org/protobuf/types/known/anypb"
 )
 
 var (
@@ -17,13 +21,17 @@ var (
 
 // server is used to implement helloworld.GreeterServer.
 type server struct {
-	pb.UnimplementedStatsAPIServer
+	gpb.UnimplementedGenericServiceServer
 }
 
 // SayHello implements helloworld.GreeterServer
-func (s *server) GetStats(ctx context.Context, in *any) (*pb.GetStatsResponse, error) {
-	log.Printf("Received:")
-	return &pb.GetStatsResponse{Test: "abc"}, nil
+func (s *server) Call(ctx context.Context, in *anypb.Any) (*anypb.Any, error) {
+	var req pb.GetStatsRequest
+	in.UnmarshalTo(&req)
+	log.Printf("Received: %v", req.GetDrilldowns())
+	resp := &pb.GetStatsResponse{Test: "abc"}
+	log.Printf("returning %v", resp.GetTest())
+	return anypb.New(resp)
 }
 
 func main() {
@@ -33,7 +41,7 @@ func main() {
 		log.Fatalf("failed to listen: %v", err)
 	}
 	s := grpc.NewServer()
-	pb.RegisterStatsAPIServer(s, &server{})
+	gpb.RegisterGenericServiceServer(s, &server{})
 	log.Printf("server listening at %v", lis.Addr())
 	if err := s.Serve(lis); err != nil {
 		log.Fatalf("failed to serve: %v", err)

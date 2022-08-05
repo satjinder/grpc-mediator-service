@@ -1,0 +1,31 @@
+syntax = "proto3";
+package stats;
+
+option go_package = "github.com/satjinder/med8r/protos;protos";
+
+import "google/protobuf/descriptor.proto";
+
+extend google.protobuf.MethodOptions {
+  optional ExpectedOperations entitlements = 51235;
+}
+
+service StatsAPI {
+  rpc GetStats(GetStatsRequest) returns (GetStatsResponse) {
+    option (entitlements) = {
+        operations: ["appointments:read"]
+    };
+  }
+}
+
+message GetStatsRequest {
+  string drilldowns = 1;
+}
+
+message GetStatsResponse {
+  string test = 1;
+}
+
+
+message ExpectedOperations {
+  repeated string operations = 1;
+}

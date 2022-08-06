@@ -19,7 +19,7 @@ const _ = grpc.SupportPackageIsVersion7
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type GenericServiceClient interface {
-	Call(ctx context.Context, in *anypb.Any, opts ...grpc.CallOption) (*anypb.Any, error)
+	Call(ctx context.Context, in *Request, opts ...grpc.CallOption) (*anypb.Any, error)
 }
 
 type genericServiceClient struct {
@@ -30,7 +30,7 @@ func NewGenericServiceClient(cc grpc.ClientConnInterface) GenericServiceClient {
 	return &genericServiceClient{cc}
 }
 
-func (c *genericServiceClient) Call(ctx context.Context, in *anypb.Any, opts ...grpc.CallOption) (*anypb.Any, error) {
+func (c *genericServiceClient) Call(ctx context.Context, in *Request, opts ...grpc.CallOption) (*anypb.Any, error) {
 	out := new(anypb.Any)
 	err := c.cc.Invoke(ctx, "/gservice.genericService/Call", in, out, opts...)
 	if err != nil {
@@ -43,7 +43,7 @@ func (c *genericServiceClient) Call(ctx context.Context, in *anypb.Any, opts ...
 // All implementations must embed UnimplementedGenericServiceServer
 // for forward compatibility
 type GenericServiceServer interface {
-	Call(context.Context, *anypb.Any) (*anypb.Any, error)
+	Call(context.Context, *Request) (*anypb.Any, error)
 	mustEmbedUnimplementedGenericServiceServer()
 }
 
@@ -51,7 +51,7 @@ type GenericServiceServer interface {
 type UnimplementedGenericServiceServer struct {
 }
 
-func (UnimplementedGenericServiceServer) Call(context.Context, *anypb.Any) (*anypb.Any, error) {
+func (UnimplementedGenericServiceServer) Call(context.Context, *Request) (*anypb.Any, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Call not implemented")
 }
 func (UnimplementedGenericServiceServer) mustEmbedUnimplementedGenericServiceServer() {}
@@ -68,7 +68,7 @@ func RegisterGenericServiceServer(s grpc.ServiceRegistrar, srv GenericServiceSer
 }
 
 func _GenericService_Call_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(anypb.Any)
+	in := new(Request)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
@@ -80,7 +80,7 @@ func _GenericService_Call_Handler(srv interface{}, ctx context.Context, dec func
 		FullMethod: "/gservice.genericService/Call",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(GenericServiceServer).Call(ctx, req.(*anypb.Any))
+		return srv.(GenericServiceServer).Call(ctx, req.(*Request))
 	}
 	return interceptor(ctx, in, info, handler)
 }

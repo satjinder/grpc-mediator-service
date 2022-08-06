@@ -21,7 +21,7 @@ type server struct {
 }
 
 // SayHello implements helloworld.GreeterServer
-func (s *server) GetStats(ctx context.Context, in *any) (*pb.GetStatsResponse, error) {
+func (s *server) GetStats(ctx context.Context, in *pb.GetStatsRequest) (*pb.GetStatsResponse, error) {
 	log.Printf("Received:")
 	return &pb.GetStatsResponse{Test: "abc"}, nil
 }

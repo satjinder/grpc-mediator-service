@@ -8,25 +8,29 @@
 // 	"google.golang.org/grpc"
 // )
 
-// func startService(sr func(*grpc.Server)) error {
-//     lis, err := net.Listen("tcp", port)
-//     if err != nil {
-//         return err
-//     }
-//     s := grpc.NewServer()
-//     sr(s)
-//     reflection.Register(s)
-//     return s.Serve(lis)
-// }
+// // func startService(sr func(*grpc.Server)) error {
+// //     lis, err := net.Listen("tcp", port)
+// //     if err != nil {
+// //         return err
+// //     }
+// //     s := grpc.NewServer()
+// //     sr(s)
+// //     reflection.Register(s)
+// //     return s.Serve(lis)
+// // }
+
+// // func main() {
+// //     err := startService(func(grpcServer *grpc.Server) {
+// //             pb.RegisterCollectionServer(grpcServer, &server.Server{})
+// //         }, &server.Server{})
+
+// //     if err != nil {
+// //         log.Fatalf("failed to start Service: %v", err)
+// //     }
+// // }
 
 // func main() {
-//     err := startService(func(grpcServer *grpc.Server) {
-//             pb.RegisterCollectionServer(grpcServer, &server.Server{})
-//         }, &server.Server{})
-
-//     if err != nil {
-//         log.Fatalf("failed to start Service: %v", err)
-//     }
+// 	grpc.LoadSpec("abc")
 // }
 
 // // https://stackoverflow.com/questions/65561125/grpc-go-single-generic-service-handler

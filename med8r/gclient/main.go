@@ -3,13 +3,15 @@ package main
 import (
 	"context"
 	"flag"
+	"fmt"
 	"log"
 	"time"
 
 	gpb "github.com/satjinder/med8r/gprotos"
-	pb "github.com/satjinder/med8r/protos"
+	pb "github.com/satjinder/med8r/statsservice"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
+	"google.golang.org/protobuf/encoding/protojson"
 	"google.golang.org/protobuf/types/known/anypb"
 )
 
@@ -36,12 +38,30 @@ func main() {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
 	defer cancel()
 	req, _ := anypb.New(&pb.GetStatsRequest{Drilldowns: *name})
-	r, err := c.Call(ctx, req)
+	r, err := c.Call(ctx, &gpb.Request{Request: req, Servicename: "stats", Requestname: "GetStatsRequest"})
 	if err != nil {
 		log.Fatalf("failed: %v", err)
 	}
 
 	var resp pb.GetStatsResponse
 	r.UnmarshalTo(&resp)
-	log.Printf("Result: %s", resp.GetTest())
+	log.Printf("Result: %s", resp.GetData())
+}
+
+func main2() {
+	rp := &pb.GetStatsResponse{
+		Data: []*pb.Stats{
+			&pb.Stats{Year: "dsfsdf"},
+		}}
+
+	jsonBytes, err := protojson.Marshal(rp)
+	if err != nil {
+		panic(err)
+	}
+	fmt.Println(string(jsonBytes))
+
+	var rp2 pb.GetStatsResponse
+	protojson.Unmarshal(jsonBytes, &rp2)
+
+	fmt.Println(rp2.Data)
 }

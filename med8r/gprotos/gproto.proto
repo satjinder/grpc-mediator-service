@@ -11,14 +11,18 @@ extend google.protobuf.MethodOptions {
 }
 
 service genericService {
-  rpc Call(google.protobuf.Any) returns (google.protobuf.Any) {
+  rpc Call(Request) returns (google.protobuf.Any) {
     option (entitlements) = {
         operations: ["appointments:read"]
     };
   }
 }
 
-
+message Request {
+  string servicename = 1;
+  string requestname = 2;
+  google.protobuf.Any request = 3;
+}
 
 message ExpectedOperations {
   repeated string operations = 1;

@@ -1,12 +1,12 @@
 syntax = "proto3";
-package statsold;
+package stats;
 
-option go_package = "github.com/satjinder/med8r/protos;protos";
+option go_package = "github.com/satjinder/med8r/statsservice;statsservice";
 
 import "google/protobuf/descriptor.proto";
 
 extend google.protobuf.MethodOptions {
-  optional ExpectedOperations entitlements = 51235;
+  optional ExpectedOperations entitlements = 51236;
 }
 
 service StatsAPI {
@@ -22,7 +22,11 @@ message GetStatsRequest {
 }
 
 message GetStatsResponse {
-  string test = 1;
+  repeated stats data = 1;
+}
+
+message stats {
+    string Year = 1;
 }
 
 

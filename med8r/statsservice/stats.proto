@@ -4,15 +4,13 @@ package stats;
 option go_package = "github.com/satjinder/med8r/statsservice;statsservice";
 
 import "google/protobuf/descriptor.proto";
-
-extend google.protobuf.MethodOptions {
-  optional ExpectedOperations entitlements = 51236;
-}
+import "gprotos/gproto.proto";
 
 service StatsAPI {
   rpc GetStats(GetStatsRequest) returns (GetStatsResponse) {
-    option (entitlements) = {
-        operations: ["appointments:read"]
+    option (gservice.med8rConfig) = {
+        entitlement_operations: ["appointments:read"],
+        auth_type: "JWT"
     };
   }
 }
@@ -27,9 +25,4 @@ message GetStatsResponse {
 
 message stats {
     string Year = 1;
-}
-
-
-message ExpectedOperations {
-  repeated string operations = 1;
 }

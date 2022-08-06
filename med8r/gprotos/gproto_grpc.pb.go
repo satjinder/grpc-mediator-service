@@ -7,7 +7,6 @@ import (
 	grpc "google.golang.org/grpc"
 	codes "google.golang.org/grpc/codes"
 	status "google.golang.org/grpc/status"
-	anypb "google.golang.org/protobuf/types/known/anypb"
 )
 
 // This is a compile-time assertion to ensure that this generated file
@@ -19,7 +18,7 @@ const _ = grpc.SupportPackageIsVersion7
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type GenericServiceClient interface {
-	Call(ctx context.Context, in *Request, opts ...grpc.CallOption) (*anypb.Any, error)
+	Call(ctx context.Context, in *Request, opts ...grpc.CallOption) (*Response, error)
 }
 
 type genericServiceClient struct {
@@ -30,8 +29,8 @@ func NewGenericServiceClient(cc grpc.ClientConnInterface) GenericServiceClient {
 	return &genericServiceClient{cc}
 }
 
-func (c *genericServiceClient) Call(ctx context.Context, in *Request, opts ...grpc.CallOption) (*anypb.Any, error) {
-	out := new(anypb.Any)
+func (c *genericServiceClient) Call(ctx context.Context, in *Request, opts ...grpc.CallOption) (*Response, error) {
+	out := new(Response)
 	err := c.cc.Invoke(ctx, "/gservice.genericService/Call", in, out, opts...)
 	if err != nil {
 		return nil, err
@@ -43,7 +42,7 @@ func (c *genericServiceClient) Call(ctx context.Context, in *Request, opts ...gr
 // All implementations must embed UnimplementedGenericServiceServer
 // for forward compatibility
 type GenericServiceServer interface {
-	Call(context.Context, *Request) (*anypb.Any, error)
+	Call(context.Context, *Request) (*Response, error)
 	mustEmbedUnimplementedGenericServiceServer()
 }
 
@@ -51,7 +50,7 @@ type GenericServiceServer interface {
 type UnimplementedGenericServiceServer struct {
 }
 
-func (UnimplementedGenericServiceServer) Call(context.Context, *Request) (*anypb.Any, error) {
+func (UnimplementedGenericServiceServer) Call(context.Context, *Request) (*Response, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Call not implemented")
 }
 func (UnimplementedGenericServiceServer) mustEmbedUnimplementedGenericServiceServer() {}

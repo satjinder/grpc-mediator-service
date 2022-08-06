@@ -38,13 +38,13 @@ func main() {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
 	defer cancel()
 	req, _ := anypb.New(&pb.GetStatsRequest{Drilldowns: *name})
-	r, err := c.Call(ctx, &gpb.Request{Request: req, Servicename: "stats", Requestname: "GetStatsRequest"})
+	r, err := c.Call(ctx, &gpb.Request{Request: req, Endpoint: "GetStats"})
 	if err != nil {
 		log.Fatalf("failed: %v", err)
 	}
 
 	var resp pb.GetStatsResponse
-	r.UnmarshalTo(&resp)
+	r.Response.UnmarshalTo(&resp)
 	log.Printf("Result: %s", resp.GetData())
 }
 

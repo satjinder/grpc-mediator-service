@@ -5,6 +5,7 @@ package main
 import (
 	"context"
 	"os"
+	"strings"
 
 	//"encoding/json"
 	"flag"
@@ -13,7 +14,7 @@ import (
 	"log"
 	"net"
 
-	gpb "github.com/satjinder/med8r/gprotos"
+	gpb "github.com/satjinder/med8r/schemas/gprotos"
 	"google.golang.org/grpc"
 	"google.golang.org/protobuf/encoding/protojson"
 	"google.golang.org/protobuf/proto"
@@ -29,13 +30,9 @@ var (
 	port = flag.Int("port", 50051, "The server port")
 )
 
-type middleware struct {
-}
-
 type server struct {
 	gpb.UnimplementedGenericServiceServer
 	schemaRegister map[string]*protoregistry.Files
-	middlewareList []middleware
 }
 
 func (s *server) Call(ctx context.Context, in *gpb.Request) (*gpb.Response, error) {
@@ -57,11 +54,12 @@ func (s *server) ConfigureEndpoint(greq *gpb.Request) (*gpb.Response, error) {
 
 func GetServiceDescriptor(s *server, greq *gpb.Request) (protoreflect.MethodDescriptor, error) {
 	endpointName := greq.GetEndpoint()
-
-	filename := "stats.proto"
+	schema := greq.GetSchema()
+	schemaParts := strings.Split(schema, "/")
+	filename := schemaParts[len(schemaParts)-1]
 	registry, _ := s.createProtoRegistry(filename)
 
-	desc, err := registry.FindFileByPath(filename)
+	desc, err := registry.FindFileByPath(schema)
 	if err != nil {
 		panic(err)
 	}
@@ -158,7 +156,7 @@ func (s *server) createProtoRegistry(filename string) (*protoregistry.Files, err
 		return files, nil
 	}
 
-	tmpFile := "../schemaregister/" + filename + "-tmp.pb"
+	tmpFile := "../schemas/register/" + filename + "-registry.pb"
 
 	marshalledDescriptorSet, err := ioutil.ReadFile(tmpFile)
 	if err != nil {

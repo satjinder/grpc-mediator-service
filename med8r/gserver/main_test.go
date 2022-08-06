@@ -1,8 +1,8 @@
 package main
 
 import (
-	gpb "github.com/satjinder/med8r/gprotos"
-	pb "github.com/satjinder/med8r/statsservice"
+	gpb "github.com/satjinder/med8r/schemas/gprotos"
+	pb "github.com/satjinder/med8r/schemas/statsservice"
 
 	//"google.golang.org/protobuf/types/dynamicpb"
 	"google.golang.org/protobuf/types/known/anypb"
@@ -12,14 +12,13 @@ import (
 	"os"
 )
 
-func Test_NewAggregate_StartsWithNoLimitRecords(t *testing.T) {
+func Test_ServerReturnsCorrectResponse(t *testing.T) {
 	fmt.Println(os.Getwd())
 	s := &server{}
 	req, _ := anypb.New(&pb.GetStatsRequest{Drilldowns: "Nation"})
-	m, err := s.ConfigureEndpoint(&gpb.Request{Endpoint: "GetStats", Request: req})
+	m, err := s.ConfigureEndpoint(&gpb.Request{Endpoint: "GetStats", Schema: "statsservice/stats.proto", Request: req})
 	if err != nil {
 		fmt.Println(err)
 	}
-	fmt.Println("gggg")
 	fmt.Println(m)
 }

@@ -4,7 +4,7 @@ package main
 
 import (
 	"context"
-	"os"
+	"errors"
 	"strings"
 
 	//"encoding/json"
@@ -14,9 +14,12 @@ import (
 	"log"
 	"net"
 
+	"github.com/satjinder/med8r/handlers/entitlementshandler"
+	"github.com/satjinder/med8r/handlers/fileservicehandler"
+	"github.com/satjinder/med8r/handlers/httpservicehandler"
 	gpb "github.com/satjinder/med8r/schemas/gprotos"
+	"github.com/satjinder/med8r/types"
 	"google.golang.org/grpc"
-	"google.golang.org/protobuf/encoding/protojson"
 	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/reflect/protodesc"
 	"google.golang.org/protobuf/reflect/protoreflect"
@@ -24,6 +27,7 @@ import (
 	"google.golang.org/protobuf/types/descriptorpb"
 	"google.golang.org/protobuf/types/dynamicpb"
 	"google.golang.org/protobuf/types/known/anypb"
+	//"github.com/satjinder/med8r/handlers/httpservicehandler"
 )
 
 var (
@@ -35,24 +39,58 @@ type server struct {
 	schemaRegister map[string]*protoregistry.Files
 }
 
-func (s *server) Call(ctx context.Context, in *gpb.Request) (*gpb.Response, error) {
-	return s.ConfigureEndpoint(in)
+func (s *server) Call(ctx context.Context, greq *gpb.Request) (*gpb.Response, error) {
+	epContext := &types.EndpointContext{}
+	serviceDesc, err := GetEndpointDescriptor(s, greq)
+	if err != nil {
+		return nil, err
+	}
+
+	epContext.EndpointDescriptor = serviceDesc
+	reqMsg, err := ParseRequest(*epContext, greq)
+	if err != nil {
+		return nil, err
+	}
+	epContext.Request = &types.GRequest{Message: reqMsg}
+	epContext.Response = &types.GResponse{}
+
+	err = ConfigureHandlers(epContext)
+	if err != nil {
+		return nil, err
+	}
+
+	for _, handler := range epContext.Handlers {
+		epCtx := context.WithValue(ctx, types.ENDPOINT_CONTEXT_KEY, epContext)
+		err = handler.Process(epCtx)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	resp, _ := anypb.New(epContext.Response.Message)
+	return &gpb.Response{Response: resp}, nil
 }
 
-func (s *server) ConfigureEndpoint(greq *gpb.Request) (*gpb.Response, error) {
-	servicedata, err := GetServiceDescriptor(s, greq)
+func ConfigureHandlers(epContext *types.EndpointContext) error {
+	epContext.EndpointConfig = ParseExtensions(*epContext)
+	for _, handler := range epContext.EndpointConfig.Handlers {
+		switch handler.Name {
+		case "http-backend":
+			epContext.Handlers = append(epContext.Handlers, httpservicehandler.NewHandler(handler))
+		case "entitlements":
+			epContext.Handlers = append(epContext.Handlers, entitlementshandler.NewHandler(handler))
+		case "file-backend":
+			epContext.Handlers = append(epContext.Handlers, fileservicehandler.NewHandler(handler))
 
-	// check extensions
-	CheckExtensions(servicedata)
-
-	// get request json
-	jsonBytes := ParseRequest(servicedata, greq, err)
-
-	// get response
-	return ProcessRequest(jsonBytes, servicedata)
+		default:
+			errMsg := fmt.Errorf("Handler not found %v", handler.Name)
+			return errors.New(errMsg.Error())
+		}
+	}
+	return nil
 }
 
-func GetServiceDescriptor(s *server, greq *gpb.Request) (protoreflect.MethodDescriptor, error) {
+func GetEndpointDescriptor(s *server, greq *gpb.Request) (protoreflect.MethodDescriptor, error) {
 	endpointName := greq.GetEndpoint()
 	schema := greq.GetSchema()
 	schemaParts := strings.Split(schema, "/")
@@ -70,67 +108,25 @@ func GetServiceDescriptor(s *server, greq *gpb.Request) (protoreflect.MethodDesc
 	return serviceDescriptor, err
 }
 
-func ProcessRequest(requestJson []byte, servicedata protoreflect.MethodDescriptor) (*gpb.Response, error) {
-	fmt.Println("get response")
-
-	jsonBytes, _ := CallExternalAPI("response.json")
-	output := servicedata.Output()
-	respmsg := dynamicpb.NewMessage(output)
-	pm := respmsg.Interface()
-	err := protojson.Unmarshal(jsonBytes, pm)
-	if err != nil {
-		fmt.Println(err)
-	}
-
-	resp, _ := anypb.New(respmsg)
-	return &gpb.Response{Response: resp}, nil
-}
-
-func ParseRequest(servicedata protoreflect.MethodDescriptor, greq *gpb.Request, err error) []byte {
+func ParseRequest(epContext types.EndpointContext, greq *gpb.Request) (*dynamicpb.Message, error) {
 	fmt.Println("parse request")
-	input := servicedata.Input()
+	input := epContext.EndpointDescriptor.Input()
 	req := greq.GetRequest()
 	bytes := req.GetValue()
 	msg := dynamicpb.NewMessage(input)
-	err = proto.Unmarshal(bytes, msg)
-	if err != nil {
-		panic(err)
-	}
-
-	jsonBytes, err := protojson.Marshal(msg)
-	if err != nil {
-		panic(err)
-	}
-	fmt.Println(string(jsonBytes))
-	return jsonBytes
-}
-
-func CheckExtensions(servicedata protoreflect.MethodDescriptor) {
-	options := servicedata.Options()
-	ex := proto.GetExtension(options, gpb.E_Med8RConfig)
-	config := ex.(*gpb.Med8RConfig)
-	fmt.Println(config.AuthType)
-
-	if config.EntitlementOperations != nil {
-		fmt.Println("check entitlements")
-		fmt.Println(config.EntitlementOperations)
-	}
-}
-
-func CallExternalAPI(filename string) ([]byte, error) {
-	jsonFile, err := os.Open(filename)
+	err := proto.Unmarshal(bytes, msg)
 	if err != nil {
 		return nil, err
 	}
-	defer jsonFile.Close()
+	return msg, nil
+}
 
-	byteValue, err2 := ioutil.ReadAll(jsonFile)
-	if err2 != nil {
-		return nil, err2
-	}
-	jsonBytes := []byte(byteValue)
-
-	return jsonBytes, nil
+func ParseExtensions(epContext types.EndpointContext) *gpb.EndpointConfig {
+	options := epContext.EndpointDescriptor.Options()
+	ex := proto.GetExtension(options, gpb.E_EndpointConfig)
+	config := ex.(*gpb.EndpointConfig)
+	fmt.Println(config.AuthType)
+	return config
 }
 
 func main() {
@@ -140,17 +136,20 @@ func main() {
 		log.Fatalf("failed to listen: %v", err)
 	}
 	s := grpc.NewServer()
-	gpb.RegisterGenericServiceServer(s, &server{})
+	gpb.RegisterGenericServiceServer(s, NewServer())
 	log.Printf("server listening at %v", lis.Addr())
 	if err := s.Serve(lis); err != nil {
 		log.Fatalf("failed to serve: %v", err)
 	}
 }
 
-func (s *server) createProtoRegistry(filename string) (*protoregistry.Files, error) {
-	if s.schemaRegister == nil {
-		s.schemaRegister = make(map[string]*protoregistry.Files)
+func NewServer() *server {
+	return &server{
+		schemaRegister: make(map[string]*protoregistry.Files),
 	}
+}
+
+func (s *server) createProtoRegistry(filename string) (*protoregistry.Files, error) {
 	files := s.schemaRegister[filename]
 	if files != nil {
 		return files, nil

@@ -8,9 +8,12 @@ import "gprotos/gproto.proto";
 
 service StatsAPI {
   rpc GetStats(GetStatsRequest) returns (GetStatsResponse) {
-    option (gservice.med8rConfig) = {
+    option (gservice.endpoint_config) = {
         entitlement_operations: ["appointments:read"],
-        auth_type: "JWT"
+        handlers: [
+          {name:"entitlements",  options: [{key:"1", value:"appointments:read"}]},
+          {name:"file-backend",  options: [{key:"Auth",value:"JWT"}]}
+        ],
     };
   }
 }

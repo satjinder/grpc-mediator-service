@@ -6,10 +6,10 @@ This service is a gateway to provide gRPC interface to non-gRPC APIs e.g. HTTP+J
 
 ```mermaid
 graph LR;
-    client-- protobuf request -->generic_service;
-    generic_service-- json request -->target_service;
-    target_service-- json response -->generic_service
-    generic_service-- protobuf response --> client;
+    client-- protobuf request -->mediator_service;
+    mediator_service-- json request -->target_service;
+    target_service-- json response -->mediator_service
+    mediator_service-- protobuf response --> client;
 ```
 
 The service uses a concept of handlers employs [Open-Closed principle](https://en.wikipedia.org/wiki/Open%E2%80%93closed_principle) to allow extend behavior without modifying existing code. Handlers are a series of operations that will be performed on the request and response in [chain of responsibility pattern](https://en.wikipedia.org/wiki/Open%E2%80%93closed_principle). More handlers can be added with a very small change (addition to the switch statement) to the pipeline code. As I learn more go, I would like to improve this part to remove any need to change the pipeline code.
@@ -24,7 +24,7 @@ type Handler interface {
 Handler creation is performed by a method to abstract the creation from the service running the code. This can be enhanced to implement complete [Factory Method pattern] (https://en.wikipedia.org/wiki/Factory_method_pattern) when required
 
 ### Endpoint Context
-Generic service prepares the EndpointContext based on the generic request fields and target proto options. Endpoint Context contains set of fields required by handlers to process the request and response:
+Mediator service prepares the EndpointContext based on the mediator request fields and target proto options. Endpoint Context contains set of fields required by handlers to process the request and response:
 
 ```go
 type EndpointContext struct {
@@ -46,34 +46,17 @@ This repository currently includes 3 handlers
 ### High Level Flow
 
 1. Team defines custom protos (CP) for a backend service (BS)
-    a. CP provides config for various handlers i.e. json on http
-2. Client calls generic service (GS) with CP request
+    1. CP provides config for various handlers i.e. json on http
+2. Client calls mediator service (GS) with CP request
 3. GS parses CP and calls configured it to handlers
-    a. http_backend converts CP to JSON and calls the backend service and returns converts JSON to CP and returns to GS
+    1. http_backend converts CP to JSON and calls the backend service and returns converts JSON to CP and returns to GS
 4. GS returns response in CP to Client
 
-## Generic Service
+## Mediator Service
 
-Generic service accepts custom protos and returns custom protos based on the stream method
+Mediator service accepts custom protos and returns custom protos based on the stream method. This service serves for all the service definition specified in its config and with protos available into its schema registry.
+Mediator service expects the custom protos to decorate the endpoint with options configured in the gprotos.
 
-
-The services provides an generic gRPC endpoint for all the requests. The proto message to this endpoint will contain the data and metadata for the target endpoint:
-
-[Generic endpoint proto message](/schemas/gprotos/gproto.proto)
-
-```protobuf
-message Request {
-  string endpoint = 1;
-  string schema = 2;
-  google.protobuf.Any request = 3;
-}
-
-```
-
-Above request message contains 3 parts:
-- endpoint: name of the endpoint in the target proto file e.g. GetStats
-- schema: URI to get the file descriptors from the schema registry
-- request: target proto message
 
 At the centre of this service is the proto definition of the endpoints. A required set of handlers can be added to the Method definition for the endpoints in the proto file. 
 
@@ -86,7 +69,13 @@ service StatsAPI {
         entitlement_operations: ["appointments:read"],
         handlers: [
           {name:"entitlements",  options: [{key:"1", value:"appointments:read"}]},
-          {name:"http-backend",  options: [{key:"Auth",value:"JWT"}]}
+          {name:"http-backend",  options: [
+             {key:"auth_type",value:"JWT"},
+               {key:"http_method",value:"GET"},
+               {key:"url_pattern",value:"api/data?drilldowns={drilldowns}&measures={measures}"},
+               {key:"host_config_key",value:"US-STATS"},
+               {key:"body",value:"US-STATS"}
+          ]}
         ],
     };
   }
@@ -153,6 +142,5 @@ go to gclient folder
 run: go run .
 ```
 
-client will call server with custom proto wrapper in the generic proto 
-and client will get response in custom proto wrapper in generic proto
+client will call server with its proto definition will get response in expected proto
 

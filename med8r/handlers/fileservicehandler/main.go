@@ -2,6 +2,7 @@ package fileservicehandler
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"os"
@@ -12,12 +13,19 @@ import (
 	"google.golang.org/protobuf/types/dynamicpb"
 )
 
+const FileName = "filename"
+
 func NewHandler(handlerConfig *gpb.Handler) *Handler {
-	return &Handler{HandlerConfig: handlerConfig}
+	handler := &Handler{HandlerConfig: handlerConfig, Options: map[string]string{}}
+	for _, opt := range handlerConfig.Options {
+		handler.Options[opt.Key] = opt.Value
+	}
+	return handler
 }
 
 type Handler struct {
 	HandlerConfig *gpb.Handler
+	Options       map[string]string
 }
 
 func (handler *Handler) Process(epCtx context.Context) error {
@@ -29,11 +37,13 @@ func (handler *Handler) Process(epCtx context.Context) error {
 	if err != nil {
 		return nil
 	}
-	fmt.Println()
 
-	filename := string(requestJson)
+	var jsonData map[string]interface{}
+	json.Unmarshal(requestJson, &jsonData)
+
+	filename := handler.Options[FileName]
 	fmt.Println(filename)
-	jsonBytes, _ := CallExternalAPI("response.json")
+	jsonBytes, _ := CallExternalAPI(filename)
 	outputDesc := epContext.EndpointDescriptor.Output()
 	respmsg := dynamicpb.NewMessage(outputDesc)
 	utils.PopulateDynamicWithJson(respmsg, jsonBytes)

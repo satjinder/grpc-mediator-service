@@ -18,9 +18,9 @@ import (
 func Test_ServerReturnsCorrectResponseForFile(t *testing.T) {
 	fmt.Println(os.Getwd())
 	s := NewServer()
-	req, _ := anypb.New(&pb.GetStatsRequest{Drilldowns: "response.json"})
+	req, _ := &pb.GetStatsRequest{Drilldowns: "response.json"}
 	ctx := context.Background()
-	m, err := s.Call(ctx, &gpb.Request{Endpoint: "GetStats", Schema: "statsservice/stats.proto", Request: req})
+	m, err := s.Handler(ctx, &gpb.Request{Endpoint: "GetStats", Schema: "statsservice/stats.proto", Request: req})
 	if err != nil {
 		fmt.Println(err)
 	}

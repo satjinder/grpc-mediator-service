@@ -6,11 +6,10 @@ import (
 	"log"
 	"time"
 
-	gpb "github.com/satjinder/med8r/schemas/gprotos"
-	pb "github.com/satjinder/med8r/schemas/usstats"
+	spb "github.com/satjinder/med8r/schemas/statsservice"
+	upb "github.com/satjinder/med8r/schemas/usstats"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
-	"google.golang.org/protobuf/types/known/anypb"
 )
 
 const (
@@ -30,18 +29,33 @@ func main() {
 		log.Fatalf("did not connect: %v", err)
 	}
 	defer conn.Close()
-	c := gpb.NewGenericServiceClient(conn)
-
 	// Contact the server and print out its response.
+	WithHttp(conn)
+	WithFile(conn)
+}
+
+func WithHttp(conn *grpc.ClientConn) {
+	c := upb.NewStatsAPIClient(conn)
+
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
 	defer cancel()
-	req, _ := anypb.New(&pb.GetStatsRequest{Drilldowns: *name})
-	r, err := c.Call(ctx, &gpb.Request{Endpoint: "GetStats", Schema: "usstats/usstats.proto", Request: req})
+	r, err := c.GetStats(ctx, &upb.GetStatsRequest{Drilldowns: *name, Measures: "Population"})
 	if err != nil {
 		log.Fatalf("failed: %v", err)
 	}
 
-	var resp pb.GetStatsResponse
-	r.Response.UnmarshalTo(&resp)
-	log.Printf("Result: %s", resp.GetData())
+	log.Println(r)
+}
+
+func WithFile(conn *grpc.ClientConn) {
+	c := spb.NewStatsAPIClient(conn)
+
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
+	defer cancel()
+	r, err := c.GetStats(ctx, &spb.GetStatsRequest{Drilldowns: *name})
+	if err != nil {
+		log.Fatalf("failed: %v", err)
+	}
+
+	log.Println(r)
 }

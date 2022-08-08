@@ -12,7 +12,7 @@ service StatsAPI {
         entitlement_operations: ["appointments:read"],
         handlers: [
           {name:"entitlements",  options: [{key:"1", value:"appointments:read"}]},
-          {name:"file-backend",  options: [{key:"Auth",value:"JWT"}]}
+          {name:"file-backend",  options: [{key:"filename",value:"response.json"}]}
         ],
     };
   }

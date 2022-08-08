@@ -1,4 +1,6 @@
+// reference
 // https://stackoverflow.com/questions/71320369/grpc-service-with-generic-proto-request-data-in-golang
+// https://stackoverflow.com/questions/65561125/grpc-go-single-generic-service-handler
 
 package main
 
@@ -26,35 +28,106 @@ import (
 	"google.golang.org/protobuf/reflect/protoregistry"
 	"google.golang.org/protobuf/types/descriptorpb"
 	"google.golang.org/protobuf/types/dynamicpb"
-	"google.golang.org/protobuf/types/known/anypb"
 	//"github.com/satjinder/med8r/handlers/httpservicehandler"
 )
 
 var (
-	port = flag.Int("port", 50051, "The server port")
+	port           = flag.Int("port", 50051, "The server port")
+	servicesConfig = []ServiceConfig{
+		ServiceConfig{registryName: "usstats.proto-registry.pb", protoPath: "usstats/usstats.proto"},
+		ServiceConfig{registryName: "stats.proto-registry.pb", protoPath: "statsservice/stats.proto"},
+	}
 )
 
-type server struct {
-	gpb.UnimplementedGenericServiceServer
-	schemaRegister map[string]*protoregistry.Files
+type ServiceConfig struct {
+	registryName string
+	protoPath    string
 }
 
-func (s *server) Call(ctx context.Context, greq *gpb.Request) (*gpb.Response, error) {
-	epContext := &types.EndpointContext{}
-	serviceDesc, err := GetEndpointDescriptor(s, greq)
+type GRPCService struct {
+	grpcServer           *grpc.Server
+	serviceDescriptorMap map[string]protoreflect.ServiceDescriptor
+}
+
+func NewServer() *GRPCService {
+	return &GRPCService{
+		grpcServer:           grpc.NewServer(),
+		serviceDescriptorMap: make(map[string]protoreflect.ServiceDescriptor),
+	}
+}
+
+func main() {
+	flag.Parse()
+	lis, err := net.Listen("tcp", fmt.Sprintf(":%d", *port))
+	if err != nil {
+		log.Fatalf("failed to listen: %v", err)
+	}
+	gs := NewServer()
+
+	gs.LoadServices()
+
+	log.Printf("server listening at %v", lis.Addr())
+	if err := gs.grpcServer.Serve(lis); err != nil {
+		log.Fatalf("failed to serve: %v", err)
+	}
+}
+
+func (s *GRPCService) LoadServices() {
+	path := "../schemas/register/"
+
+	for _, f := range servicesConfig {
+		registry, _ := s.createProtoRegistry(path + f.registryName)
+		s.LoadService(f.protoPath, registry)
+	}
+}
+
+func (s *GRPCService) LoadService(serviceProtoName string, registry *protoregistry.Files) {
+	fd, _ := registry.FindFileByPath(serviceProtoName)
+	services := fd.Services()
+
+	for i := 0; i < services.Len(); i++ {
+		rsd := services.Get(i)
+		srvName := string(rsd.FullName())
+		fmt.Println("For service ", srvName)
+		s.serviceDescriptorMap[string(srvName)] = rsd
+		gsd := grpc.ServiceDesc{ServiceName: srvName, HandlerType: (*interface{})(nil)}
+
+		methods := rsd.Methods()
+		for m := 0; m < methods.Len(); m++ {
+			method := methods.Get(m)
+			methodName := string(method.Name())
+			fmt.Println(" For method ", methodName)
+			gsd.Methods = append(gsd.Methods, grpc.MethodDesc{MethodName: methodName, Handler: s.Handler})
+		}
+		s.grpcServer.RegisterService(&gsd, s)
+	}
+
+}
+
+func (s *GRPCService) createProtoRegistry(path string) (*protoregistry.Files, error) {
+
+	marshalledDescriptorSet, err := ioutil.ReadFile(path)
+	if err != nil {
+		return nil, err
+	}
+	descriptorSet := descriptorpb.FileDescriptorSet{}
+	err = proto.Unmarshal(marshalledDescriptorSet, &descriptorSet)
 	if err != nil {
 		return nil, err
 	}
 
-	epContext.EndpointDescriptor = serviceDesc
-	reqMsg, err := ParseRequest(*epContext, greq)
+	files, err := protodesc.NewFiles(&descriptorSet)
 	if err != nil {
 		return nil, err
 	}
-	epContext.Request = &types.GRequest{Message: reqMsg}
-	epContext.Response = &types.GResponse{}
 
-	err = ConfigureHandlers(epContext)
+	return files, nil
+}
+
+func (s *GRPCService) Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	fmt.Print("handle")
+
+	epContext, err := s.ConfigureEndpointContext(ctx, dec)
 	if err != nil {
 		return nil, err
 	}
@@ -67,8 +140,37 @@ func (s *server) Call(ctx context.Context, greq *gpb.Request) (*gpb.Response, er
 		}
 	}
 
-	resp, _ := anypb.New(epContext.Response.Message)
-	return &gpb.Response{Response: resp}, nil
+	return epContext.Response.Message, nil
+}
+
+func (s *GRPCService) ConfigureEndpointContext(ctx context.Context, dec func(interface{}) error) (*types.EndpointContext, error) {
+	stream := grpc.ServerTransportStreamFromContext(ctx)
+	arr := strings.Split(stream.Method(), "/")
+	fmt.Println(stream.Method())
+
+	serviceName := arr[1]
+	methodName := arr[2]
+
+	fmt.Printf(" for service %v and method %v", serviceName, methodName)
+
+	service := s.serviceDescriptorMap[serviceName]
+
+	epContext := &types.EndpointContext{}
+	epContext.EndpointDescriptor = service.Methods().ByName(protoreflect.Name(methodName))
+
+	input := epContext.EndpointDescriptor.Input()
+	msg := dynamicpb.NewMessage(input)
+	dec(msg)
+
+	epContext.Request = &types.GRequest{Message: msg}
+	epContext.Response = &types.GResponse{}
+
+	err := ConfigureHandlers(epContext)
+	if err != nil {
+		return nil, err
+	}
+
+	return epContext, nil
 }
 
 func ConfigureHandlers(epContext *types.EndpointContext) error {
@@ -90,89 +192,10 @@ func ConfigureHandlers(epContext *types.EndpointContext) error {
 	return nil
 }
 
-func GetEndpointDescriptor(s *server, greq *gpb.Request) (protoreflect.MethodDescriptor, error) {
-	endpointName := greq.GetEndpoint()
-	schema := greq.GetSchema()
-	schemaParts := strings.Split(schema, "/")
-	filename := schemaParts[len(schemaParts)-1]
-	registry, _ := s.createProtoRegistry(filename)
-
-	desc, err := registry.FindFileByPath(schema)
-	if err != nil {
-		panic(err)
-	}
-
-	fd := desc.Services()
-
-	serviceDescriptor := fd.ByName(protoreflect.Name("StatsAPI")).Methods().ByName(protoreflect.Name(endpointName))
-	return serviceDescriptor, err
-}
-
-func ParseRequest(epContext types.EndpointContext, greq *gpb.Request) (*dynamicpb.Message, error) {
-	fmt.Println("parse request")
-	input := epContext.EndpointDescriptor.Input()
-	req := greq.GetRequest()
-	bytes := req.GetValue()
-	msg := dynamicpb.NewMessage(input)
-	err := proto.Unmarshal(bytes, msg)
-	if err != nil {
-		return nil, err
-	}
-	return msg, nil
-}
-
 func ParseExtensions(epContext types.EndpointContext) *gpb.EndpointConfig {
 	options := epContext.EndpointDescriptor.Options()
 	ex := proto.GetExtension(options, gpb.E_EndpointConfig)
 	config := ex.(*gpb.EndpointConfig)
 	fmt.Println(config.AuthType)
 	return config
-}
-
-func main() {
-	flag.Parse()
-	lis, err := net.Listen("tcp", fmt.Sprintf(":%d", *port))
-	if err != nil {
-		log.Fatalf("failed to listen: %v", err)
-	}
-	s := grpc.NewServer()
-	gpb.RegisterGenericServiceServer(s, NewServer())
-	log.Printf("server listening at %v", lis.Addr())
-	if err := s.Serve(lis); err != nil {
-		log.Fatalf("failed to serve: %v", err)
-	}
-}
-
-func NewServer() *server {
-	return &server{
-		schemaRegister: make(map[string]*protoregistry.Files),
-	}
-}
-
-func (s *server) createProtoRegistry(filename string) (*protoregistry.Files, error) {
-	files := s.schemaRegister[filename]
-	if files != nil {
-		return files, nil
-	}
-
-	tmpFile := "../schemas/register/" + filename + "-registry.pb"
-
-	marshalledDescriptorSet, err := ioutil.ReadFile(tmpFile)
-	if err != nil {
-		return nil, err
-	}
-	descriptorSet := descriptorpb.FileDescriptorSet{}
-	err = proto.Unmarshal(marshalledDescriptorSet, &descriptorSet)
-	if err != nil {
-		return nil, err
-	}
-
-	//fmt.Println(descriptorSet)
-	files, err = protodesc.NewFiles(&descriptorSet)
-	if err != nil {
-		return nil, err
-	}
-
-	s.schemaRegister[filename] = files
-	return files, nil
 }

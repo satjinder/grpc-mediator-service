@@ -1,6 +1,9 @@
 package utils
 
 import (
+	"context"
+
+	"github.com/satjinder/med8r/types"
 	"google.golang.org/protobuf/encoding/protojson"
 	"google.golang.org/protobuf/types/dynamicpb"
 )
@@ -20,4 +23,20 @@ func ConvertDynamicToJson(dmsg *dynamicpb.Message) ([]byte, error) {
 		return nil, err
 	}
 	return jsonBytes, nil
+}
+
+func GetEndpointFromContext(epCtx context.Context) *types.EndpointContext {
+	val := epCtx.Value(types.ENDPOINT_CONTEXT_KEY)
+	epContext := val.(*types.EndpointContext)
+	return epContext
+}
+
+func ConvertToOutput(epContext *types.EndpointContext, body []byte) (*dynamicpb.Message, error) {
+	outputDesc := epContext.EndpointDescriptor.Output()
+	respmsg := dynamicpb.NewMessage(outputDesc)
+	err := PopulateDynamicWithJson(respmsg, body)
+	if err != nil {
+		return nil, err
+	}
+	return respmsg, nil
 }

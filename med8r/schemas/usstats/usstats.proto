@@ -14,14 +14,22 @@ service StatsAPI {
         entitlement_operations: ["appointments:read"],
         handlers: [
           {name:"entitlements",  options: [{key:"1", value:"appointments:read"}]},
-          {name:"http-backend",  options: [{key:"Auth",value:"JWT"}]}
+          {name:"http-backend",  options: [
+             {key:"auth_type",value:"JWT"},
+               {key:"http_method",value:"GET"},
+               {key:"url_pattern",value:"api/data?drilldowns={drilldowns}&measures={measures}"},
+               {key:"host_config_key",value:"US-STATS"},
+               {key:"body",value:"US-STATS"}
+          ]}
         ],
     };
   }
 }
 
+
 message GetStatsRequest {
   string drilldowns = 1;
+  string measures = 2;
 }
 
 message GetStatsResponse {

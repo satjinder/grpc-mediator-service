@@ -4,23 +4,7 @@ package gservice;
 option go_package = "github.com/satjinder/med8r/schemas/gprotos;gprotos";
 
 import "google/protobuf/descriptor.proto";
-import "google/protobuf/any.proto";
 
-
-service genericService {
-  rpc Call(Request) returns (Response) {
-  }
-}
-
-message Request {
-  string endpoint = 1;
-  string schema = 2;
-  google.protobuf.Any request = 3;
-}
-
-message Response {
-  google.protobuf.Any response = 1;
-}
 
 message EndpointConfig {
   repeated string entitlement_operations = 1;
@@ -31,6 +15,8 @@ message EndpointConfig {
 extend google.protobuf.MethodOptions {
   optional EndpointConfig endpoint_config = 51236;
 }
+
+
 
 message Handler{
   string name = 1;

@@ -47,21 +47,15 @@ This repository currently includes 3 handlers
 
 1. Team defines custom protos (CP) for a backend service (BS)
     a. CP provides config for various handlers i.e. json on http
-2. Client calls generic service (GS) with CP wrapped in the generic protos (GP)
-3. GS unpacks GP and parses CP and calls configured it to handlers
+2. Client calls generic service (GS) with CP request
+3. GS parses CP and calls configured it to handlers
     a. http_backend converts CP to JSON and calls the backend service and returns converts JSON to CP and returns to GS
-4. GS wraps CP to GP and returns to Client
+4. GS returns response in CP to Client
 
 ## Generic Service
 
-Generic service accepts custom protos wrapped in a generic request and returns custom protos in generic response
+Generic service accepts custom protos and returns custom protos based on the stream method
 
-```protobuf
-service GenericService {
-  rpc Call(Request) returns (Response) {
-  }
-}
-```
 
 The services provides an generic gRPC endpoint for all the requests. The proto message to this endpoint will contain the data and metadata for the target endpoint:
 

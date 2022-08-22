@@ -5,17 +5,35 @@
 This service is a gateway to provide gRPC interface to non-gRPC APIs e.g. HTTP+JSON. Multiple handlers of the request and response can be added to  the pipeline e.g. logging, checking permissions, calling backend API to process request and return response.
 
 ```mermaid
-graph LR;
-    client-- protobuf request -->mediator_service;
-    mediator_service-- json request -->target_service;
-    target_service-- json response -->mediator_service
-    mediator_service-- protobuf response --> client;
+graph TB;
+    client-- 1: protobuf request -->mediator_service;
+    mediator_service-- 2: read proto descriptros -->schema_registry[(schema registry)]
+    mediator_service-- 3: json request -->target_service;
+    target_service-- 4: json response -->mediator_service
+    mediator_service-- 5: protobuf response --> client;
 ```
 
 The service uses a concept of handlers employs [Open-Closed principle](https://en.wikipedia.org/wiki/Open%E2%80%93closed_principle) to allow extend behavior without modifying existing code. Handlers are a series of operations that will be performed on the request and response in [chain of responsibility pattern](https://en.wikipedia.org/wiki/Open%E2%80%93closed_principle). More handlers can be added with a very small change (addition to the switch statement) to the pipeline code. As I learn more go, I would like to improve this part to remove any need to change the pipeline code.
 
 ## Handlers
 Idea of handler is based on the ASP.NET Core middleware components that receives HTTPContext to process request and response parts. There is an interface defined that handlers must adhere to by implementing a "Process" method. This method receives context containing a value for EndPointContext.
+
+```mermaid
+flowchart TB;
+    client-- 1: protobuf request -->mediator_service;
+    mediator_service-- 2: read proto descriptros -->schema_registry[(schema registry)]
+    mediator_service-- 3: endpoint context -->handlers{for each handlers};
+    handlers -- 4: endpoint context --> mediator_service
+    mediator_service-- 5: protobuf response --> client;
+    handlers -- 3.1: endpoint context --> auth_handler[\handler 1 e.g.Authorisation handler\]
+    auth_handler -- 3.1.1 endpoint context or error --> handlers
+    handlers -- 3.2: endpoint context --> http_handler[\handler 2 e.g.HTTP+JSON handler\]
+    http_handler -- 3.2.1: http json request --> target_service
+    target_service-- 3.2.2: http json response --> http_handler
+    http_handler -- 3.2.3: endpoint context --> handlers
+    
+```
+
 ```go
 type Handler interface {
 	Process(epCtx context.Context) error

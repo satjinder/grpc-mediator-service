@@ -1,8 +1,6 @@
 syntax = "proto3";
 package stats;
 
-option go_package = "github.com/satjinder/med8r/schemas/statsservice;statsservice";
-
 import "google/protobuf/descriptor.proto";
 import "gprotos/gproto.proto";
 

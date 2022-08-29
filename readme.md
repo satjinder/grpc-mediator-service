@@ -116,7 +116,7 @@ This project uses a very basic file-based schema registry. The following command
 buf generate
 
 # generate descriptor sets, outputs to {repo}/descriptor-sets/pkg.Service.fds
-buf build --type="pkg.Service" -o "gen/descriptor-sets/pkg.Service.fds" --as-descriptor-set
+buf build --type="{pkg.Service}" -o "gen/descriptor-sets/{pkg.Service}.fds" --as-descriptor-set
 ```
 
 The mediator service uses the descriptor sets to discover endpoint definitions on application startup. These are read into the service from file and used as as proto descriptor source.

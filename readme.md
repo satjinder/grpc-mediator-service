@@ -104,28 +104,39 @@ Above proto definition provides an endpoint called "GetStats". It also specifies
 
 ## Schema Registry
 
-This project uses a very basic file-based schema registry. Use the following protoc command to generate the file descriptors for the target proto files including all its imports
+This project uses a very basic file-based schema registry. The following commands requires the following proto tools and plugins installed
+
+- buf > `v1.2.0`
+- protoc-gen-go
+- protoc-gen-go-grpc
+- protoc-gen-connect-go
+
 ```bash
-protoc --include_imports --descriptor_set_out="<target path>/<file-name>.proto-registry.pb" -I<import files path> <source path>/<file-name>.proto
+# generate go code, outputs to {repo}/gen
+buf generate
+
+# generate descriptor sets, outputs to {repo}/descriptor-sets/pkg.Service.fds
+buf build --type="pkg.Service" -o "gen/descriptor-sets/pkg.Service.fds" --as-descriptor-set
 ```
 
-Store the output file to the local schemas\register folder. The service uses "protoregistry" to read the descriptors and parse into dynamic proto message using "dynamicpb"
-
+The mediator service uses the descriptor sets to discover endpoint definitions on application startup. These are read into the service from file and used as as proto descriptor source.
 
 ```go
-	tmpFile := "../schemas/register/" + filename + "-registry.pb"
+	fdsFile := filepath.Join(*descriptorSetsDir, "pkg.Service.fds")
 
-	marshalledDescriptorSet, err := ioutil.ReadFile(tmpFile)
+	fdsBytes, err := ioutil.ReadFile(fdsFile)
 	if err != nil {
 		return nil, err
 	}
 	descriptorSet := descriptorpb.FileDescriptorSet{}
-	err = proto.Unmarshal(marshalledDescriptorSet, &descriptorSet)
+	err = proto.Unmarshal(fdsBytes, &descriptorSet)
 ```
 
 
 ## How to define new target
+
 #### 1. Define protobuf for the target service
+
 #### 2. Specify required handlers in the endpoint options
 
 #### 3. Generate descriptor files and add to the schema registry
@@ -133,31 +144,26 @@ Store the output file to the local schemas\register folder. The service uses "pr
 Generate descriptor files and store the output in the schema registry file. Following commands generate a descriptors for a sample file and add them to the registry folder
 
 - go to med8r folder and run following command
-- generate file descriptor set for stats.proto and usstats
+- generate file descriptor set for stats.proto and usstats.proto
 
-```bash
-cd med8r
-protoc --include_imports --descriptor_set_out="schemas/register/stats.proto-registry.pb" -Ischemas schemas/statsservice/stats.proto
-
-protoc --include_imports --descriptor_set_out="schemas/register/usstats.proto-registry.pb" -Ischemas schemas/usstats/usstats.proto
-
-cd schemas
-protoc --go_out=. --go_opt=paths=source_relative --go-grpc_out=. --go-grpc_opt=paths=source_relative **/*.proto
+```sh
+buf build -type "stats.StatsAPI" -o --descriptor_set_out="gen/descriptor-sets/stats.StatsAPI.fds"
+buf build -type "usstats.StatsAPI" -o --descriptor_set_out="gen/descriptor-sets/usstats.StatsAPI.fds"
 ```
 
 ## Test
-go to gserver folder
-```
-go test
+
+```sh
+go test ./...
 ```
 ## Run
-go to gserver folder
-```
-run: go run .
-```
-go to gclient folder
-```
-run: go run .
+
+```sh
+# run the server
+go run ./cmd/gserver
+
+# run the client (in another terminal)
+go run ./cmd/gclient
 ```
 
 client will call server with its proto definition will get response in expected proto

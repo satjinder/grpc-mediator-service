@@ -7,6 +7,7 @@ package main
 import (
 	"context"
 	"errors"
+	"path/filepath"
 	"strings"
 
 	//"encoding/json"
@@ -32,10 +33,11 @@ import (
 )
 
 var (
-	port           = flag.Int("port", 50051, "The server port")
-	servicesConfig = []ServiceConfig{
-		{registryName: "usstats.proto-registry.pb", protoPath: "usstats/usstats.proto"},
-		{registryName: "stats.proto-registry.pb", protoPath: "statsservice/stats.proto"},
+	port              = flag.Int("port", 50051, "The server port")
+	descriptorSetsDir = flag.String("descriptor-sets", "gen/descriptor-sets", "directory containing all descriptor sets to load")
+	servicesConfig    = []ServiceConfig{
+		{registryName: "usstats.fds", protoPath: "usstats/usstats.proto"},
+		{registryName: "stats.fds", protoPath: "statsservice/stats.proto"},
 	}
 )
 
@@ -63,8 +65,9 @@ func main() {
 		log.Fatalf("failed to listen: %v", err)
 	}
 	gs := NewServer()
-
-	gs.LoadServices()
+	if err := gs.LoadServices(); err != nil {
+		panic(err)
+	}
 
 	log.Printf("server listening at %v", lis.Addr())
 	if err := gs.grpcServer.Serve(lis); err != nil {
@@ -72,17 +75,25 @@ func main() {
 	}
 }
 
-func (s *GRPCService) LoadServices() {
-	path := "../schemas/register/"
-
+func (s *GRPCService) LoadServices() error {
 	for _, f := range servicesConfig {
-		registry, _ := s.createProtoRegistry(path + f.registryName)
-		s.LoadService(f.protoPath, registry)
+		fdsFile := filepath.Join(*descriptorSetsDir, f.registryName)
+		registry, err := s.createProtoRegistry(fdsFile)
+		if err != nil {
+			return err
+		}
+		if err := s.LoadService(f.protoPath, registry); err != nil {
+			return err
+		}
 	}
+	return nil
 }
 
-func (s *GRPCService) LoadService(serviceProtoName string, registry *protoregistry.Files) {
-	fd, _ := registry.FindFileByPath(serviceProtoName)
+func (s *GRPCService) LoadService(serviceProtoName string, registry *protoregistry.Files) error {
+	fd, err := registry.FindFileByPath(serviceProtoName)
+	if err != nil {
+		return err
+	}
 	services := fd.Services()
 
 	for i := 0; i < services.Len(); i++ {
@@ -101,6 +112,7 @@ func (s *GRPCService) LoadService(serviceProtoName string, registry *protoregist
 		}
 		s.grpcServer.RegisterService(&gsd, s)
 	}
+	return nil
 }
 
 func (s *GRPCService) createProtoRegistry(path string) (*protoregistry.Files, error) {

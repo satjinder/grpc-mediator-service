@@ -1,0 +1,29 @@
+syntax = "proto3";
+package stats;
+
+import "google/protobuf/descriptor.proto";
+import "gprotos/gproto.proto";
+
+service StatsAPI {
+  rpc GetStats(GetStatsRequest) returns (GetStatsResponse) {
+    option (gproto.endpoint_config) = {
+        entitlement_operations: ["appointments:read"],
+        handlers: [
+          {name:"entitlements",  options: [{key:"1", value:"appointments:read"}]},
+          {name:"file-backend",  options: [{key:"filename",value:"response.json"}]}
+        ],
+    };
+  }
+}
+
+message GetStatsRequest {
+  string drilldowns = 1;
+}
+
+message GetStatsResponse {
+  repeated stats data = 1;
+}
+
+message stats {
+    string Year = 1;
+}

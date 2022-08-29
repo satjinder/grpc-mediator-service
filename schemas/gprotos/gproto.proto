@@ -1,0 +1,24 @@
+syntax = "proto3";
+package gproto;
+
+import "google/protobuf/descriptor.proto";
+
+message EndpointConfig {
+  repeated string entitlement_operations = 1;
+  string auth_type = 2;
+  repeated Handler handlers = 3;
+}
+
+extend google.protobuf.MethodOptions {
+  optional EndpointConfig endpoint_config = 51236;
+}
+
+message Handler{
+  string name = 1;
+  repeated HandlerOptions options = 2;
+}
+
+message HandlerOptions {
+  string key=1;
+  string value=2;
+}

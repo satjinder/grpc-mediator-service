@@ -116,7 +116,7 @@ This project uses a very basic file-based schema registry. The following command
 buf generate
 
 # generate descriptor sets, outputs to {repo}/descriptor-sets/pkg.Service.fds
-buf build --type="{pkg.Service}" -o "gen/descriptor-sets/{pkg.Service}.fds" --as-descriptor-set
+buf build --type="{pkg.Service}" -o "gen/descriptor-sets/{pkg.Service}.fds" --as-file-descriptor-set
 ```
 
 The mediator service uses the descriptor sets to discover endpoint definitions on application startup. These are read into the service from file and used as as proto descriptor source.
@@ -147,8 +147,8 @@ Generate descriptor files and store the output in the schema registry file. Foll
 - generate file descriptor set for stats.proto and usstats.proto
 
 ```sh
-buf build -type "stats.StatsAPI" -o --descriptor_set_out="gen/descriptor-sets/stats.StatsAPI.fds"
-buf build -type "usstats.StatsAPI" -o --descriptor_set_out="gen/descriptor-sets/usstats.StatsAPI.fds"
+buf build --type "stats.StatsAPI" -o "gen/descriptor-sets/stats.StatsAPI.fds" --as-file-descriptor-set
+buf build --type "usstats.StatsAPI" -o "gen/descriptor-sets/usstats.StatsAPI.fds" --as-file-descriptor-set
 ```
 
 ## Test

@@ -1,4 +1,4 @@
-# Disclaimer: 
+# Disclaimer:
 > **_NOTE:_**  This is my one of the firs t encounter with go and gRPC so the quality of code may be very poor. It may contains traces of my C# and OOP based background.
 
 # GRPC Mediator Service
@@ -31,7 +31,7 @@ flowchart TB;
     http_handler -- 3.2.1: http json request --> target_service
     target_service-- 3.2.2: http json response --> http_handler
     http_handler -- 3.2.3: endpoint context --> handlers
-    
+
 ```
 
 ```go
@@ -76,7 +76,7 @@ Mediator service accepts custom protos and returns custom protos based on the st
 Mediator service expects the custom protos to decorate the endpoint with options configured in the gprotos.
 
 
-At the centre of this service is the proto definition of the endpoints. A required set of handlers can be added to the Method definition for the endpoints in the proto file. 
+At the centre of this service is the proto definition of the endpoints. A required set of handlers can be added to the Method definition for the endpoints in the proto file.
 
 [US stats service endpoint proto message](/schemas/usstats/usstats.proto)
 

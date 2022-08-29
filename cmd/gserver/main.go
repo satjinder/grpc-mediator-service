@@ -36,8 +36,8 @@ var (
 	port              = flag.Int("port", 50051, "The server port")
 	descriptorSetsDir = flag.String("descriptor-sets", "gen/descriptor-sets", "directory containing all descriptor sets to load")
 	servicesConfig    = []ServiceConfig{
-		{registryName: "usstats.fds", protoPath: "usstats/usstats.proto"},
-		{registryName: "stats.fds", protoPath: "statsservice/stats.proto"},
+		{registryName: "usstats.StatsAPI.fds", protoPath: "usstats/usstats.proto"},
+		{registryName: "stats.StatsAPI.fds", protoPath: "statsservice/stats.proto"},
 	}
 )
 

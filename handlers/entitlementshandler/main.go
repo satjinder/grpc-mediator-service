@@ -5,10 +5,12 @@ import (
 	"fmt"
 
 	gpb "github.com/satjinder/grpc-mediator-service/gen/gprotos"
+	"google.golang.org/protobuf/reflect/protoreflect"
 )
 
-func NewHandler(handlerConfig *gpb.Handler) *Handler {
-	return &Handler{HandlerConfig: handlerConfig}
+func (handler *Handler) Init(handlerConfig *gpb.Handler, method protoreflect.MethodDescriptor) error {
+	handler.HandlerConfig = handlerConfig
+	return nil
 }
 
 type Handler struct {

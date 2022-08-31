@@ -147,7 +147,7 @@ Generate descriptor files and store the output in the schema registry file. Foll
 - generate file descriptor set for stats.proto and usstats.proto
 
 ```sh
-buf build --type "stats.StatsAPI" -o "gen/descriptor-sets/stats.StatsAPI.fds" --as-file-descriptor-set
+buf build --type "fileservice.FileAPI" -o "gen/descriptor-sets/fileservice.FileAPI.fds" --as-file-descriptor-set
 buf build --type "usstats.StatsAPI" -o "gen/descriptor-sets/usstats.StatsAPI.fds" --as-file-descriptor-set
 ```
 

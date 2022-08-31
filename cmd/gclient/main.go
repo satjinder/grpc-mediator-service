@@ -6,8 +6,8 @@ import (
 	"log"
 	"time"
 
-	spb "github.com/satjinder/grpc-mediator-service/gen/statsservice"
-	upb "github.com/satjinder/grpc-mediator-service/gen/usstats"
+	fpb "github.com/satjinder/grpc-mediator-service/gen/fileservice"
+	hpb "github.com/satjinder/grpc-mediator-service/gen/usstats"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 )
@@ -35,11 +35,11 @@ func main() {
 }
 
 func WithHttp(conn *grpc.ClientConn) {
-	c := upb.NewStatsAPIClient(conn)
+	c := hpb.NewStatsAPIClient(conn)
 
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
 	defer cancel()
-	r, err := c.GetStats(ctx, &upb.GetStatsRequest{Drilldowns: *name, Measures: "Population"})
+	r, err := c.GetStats(ctx, &hpb.GetStatsRequest{Drilldowns: "Nation", Measures: "Population"})
 	if err != nil {
 		log.Fatalf("failed: %v", err)
 	}
@@ -48,14 +48,15 @@ func WithHttp(conn *grpc.ClientConn) {
 }
 
 func WithFile(conn *grpc.ClientConn) {
-	c := spb.NewStatsAPIClient(conn)
+	c := fpb.NewFileAPIClient(conn)
 
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
 	defer cancel()
-	r, err := c.GetStats(ctx, &spb.GetStatsRequest{Drilldowns: *name})
+	r, err := c.GetJson(ctx, &fpb.GetJsonRequest{Filename: "response.json"})
 	if err != nil {
 		log.Fatalf("failed: %v", err)
 	}
 
+	log.Println("worked....")
 	log.Println(r)
 }

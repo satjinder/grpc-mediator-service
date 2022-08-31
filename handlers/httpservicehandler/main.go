@@ -3,6 +3,8 @@ package httpservicehandler
 import (
 	"context"
 	"encoding/json"
+	"errors"
+	"fmt"
 	"io/ioutil"
 	"net/http"
 	"regexp"
@@ -10,6 +12,7 @@ import (
 
 	gpb "github.com/satjinder/grpc-mediator-service/gen/gprotos"
 	"github.com/satjinder/grpc-mediator-service/utils"
+	"google.golang.org/protobuf/reflect/protoreflect"
 )
 
 const (
@@ -20,17 +23,34 @@ const (
 	Body          = "body"
 )
 
-func NewHandler(handlerConfig *gpb.Handler) *Handler {
-	handler := &Handler{HandlerConfig: handlerConfig, Options: map[string]string{}}
+func (handler *Handler) Init(handlerConfig *gpb.Handler, method protoreflect.MethodDescriptor) error {
+	handler.HandlerConfig = handlerConfig
+	handler.Options = map[string]string{}
+	handler.UrlFields = map[string]string{}
+
 	for _, opt := range handlerConfig.Options {
 		handler.Options[opt.Key] = opt.Value
 	}
-	return handler
+
+	url := handler.Options[UrlPattern]
+	regX := regexp.MustCompile(`\{(.*?)\}`)
+	for _, m := range regX.FindAllStringSubmatch(url, -1) {
+		md := method.Input()
+		fd := md.Fields().ByName(protoreflect.Name(m[1]))
+		if fd == nil {
+			errM := fmt.Errorf("Required '%v' field not found for '%v' by httpservicehandler", m[1], method.FullName())
+			return errors.New(errM.Error())
+		}
+		handler.UrlFields[m[1]] = m[0]
+	}
+
+	return nil
 }
 
 type Handler struct {
 	HandlerConfig *gpb.Handler
 	Options       map[string]string
+	UrlFields     map[string]string
 }
 
 func (handler *Handler) Process(epCtx context.Context) error {
@@ -67,10 +87,9 @@ func (handler *Handler) Process(epCtx context.Context) error {
 
 func getUrl(handler *Handler, jsonData map[string]interface{}) string {
 	url := handler.Options[UrlPattern]
-	regX := regexp.MustCompile(`\{(.*?)\}`)
-	for _, m := range regX.FindAllStringSubmatch(`api/data?drilldowns={drilldowns}&measures={measures}`, -1) {
-		replace := jsonData[m[1]].(string)
-		url = strings.Replace(url, m[0], replace, -1)
+	for field, val := range handler.UrlFields {
+		replace := jsonData[field].(string)
+		url = strings.Replace(url, val, replace, -1)
 	}
 	return url
 }

@@ -1,26 +1,26 @@
 syntax = "proto3";
-package stats;
+package fileservice;
 
 import "google/protobuf/descriptor.proto";
 import "gprotos/gproto.proto";
 
-service StatsAPI {
-  rpc GetStats(GetStatsRequest) returns (GetStatsResponse) {
+service FileAPI {
+  rpc GetJson(GetJsonRequest) returns (GetJsonResponse) {
     option (gproto.endpoint_config) = {
         entitlement_operations: ["appointments:read"],
         handlers: [
           {name:"entitlements",  options: [{key:"1", value:"appointments:read"}]},
-          {name:"file-backend",  options: [{key:"filename",value:"response.json"}]}
+          {name:"file-backend",  options: [{key:"filename",value:"filename"}]}
         ],
     };
   }
 }
 
-message GetStatsRequest {
-  string drilldowns = 1;
+message GetJsonRequest {
+  string filename = 1;
 }
 
-message GetStatsResponse {
+message GetJsonResponse {
   repeated stats data = 1;
 }
 

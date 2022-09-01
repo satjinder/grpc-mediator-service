@@ -8,6 +8,7 @@ import (
 	"net"
 	"testing"
 
+	"github.com/satjinder/grpc-mediator-service/defaulthandlers"
 	"github.com/satjinder/grpc-mediator-service/types"
 	fpb "go.buf.build/grpc/go/satjinder/schemas/fileservice/v1"
 	hpb "go.buf.build/grpc/go/satjinder/schemas/usstats/v1"
@@ -36,7 +37,7 @@ func init() {
 			{RegistryName: "usstats.v2.StatsAPI.fds", ProtoPath: "usstats/v2/usstats.proto"},
 			{RegistryName: "fileservice.v1.FileAPI.fds", ProtoPath: "fileservice/v1/fileservice.proto"},
 		},
-	})
+	}, &defaulthandlers.DefaultProvider{})
 
 	if err != nil {
 		panic(err)

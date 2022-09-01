@@ -3,13 +3,8 @@ package endpoint
 
 import (
 	"context"
-	"errors"
 	"fmt"
 
-	eh1 "github.com/satjinder/grpc-mediator-service/handlers/authorisationhandler/v1"
-	eh2 "github.com/satjinder/grpc-mediator-service/handlers/authorisationhandler/v2"
-	fh1 "github.com/satjinder/grpc-mediator-service/handlers/fileservicehandler/v1"
-	hh1 "github.com/satjinder/grpc-mediator-service/handlers/httpservicehandler/v1"
 	"github.com/satjinder/grpc-mediator-service/types"
 	gpb "go.buf.build/grpc/go/satjinder/schemas/gproto/v1"
 	"google.golang.org/protobuf/proto"
@@ -18,14 +13,16 @@ import (
 )
 
 type Endpoint struct {
-	method         protoreflect.MethodDescriptor
-	handlers       []types.Handler     // Array of handlers appended in the required order of execution based on the EndpointConfig
-	endpointConfig *gpb.EndpointConfig // Endpoint configuration options defined by the target endpoint
+	method          protoreflect.MethodDescriptor
+	handlers        []types.Handler     // Array of handlers appended in the required order of execution based on the EndpointConfig
+	endpointConfig  *gpb.EndpointConfig // Endpoint configuration options defined by the target endpoint
+	handlerProvider types.HandlerProvider
 }
 
-func NewEndpoint(method protoreflect.MethodDescriptor) (*Endpoint, error) {
+func NewEndpoint(method protoreflect.MethodDescriptor, handlerProvider types.HandlerProvider) (*Endpoint, error) {
 	ep := &Endpoint{}
 	ep.method = method
+	ep.handlerProvider = handlerProvider
 	ep.endpointConfig = parseExtensions(ep.method)
 	err := ep.configureHandlers()
 	if err != nil {
@@ -57,24 +54,14 @@ func (ep *Endpoint) Process(ctx context.Context, dec func(interface{}) error) (i
 }
 
 func (ep *Endpoint) configureHandlers() error {
-	var handler types.Handler
 	for _, handlerConfig := range ep.endpointConfig.Handlers {
-		switch handlerConfig.Name {
-		case "http-backend":
-			handler = &hh1.Handler{}
-		case "authorisation":
-			handler = &eh1.Handler{}
-		case "authorisationv2":
-			handler = &eh2.Handler{}
-		case "file-backend":
-			handler = &fh1.Handler{}
+		handler, err := ep.handlerProvider.Get(handlerConfig.Name)
 
-		default:
-			errMsg := fmt.Errorf("Handler not found %v", handlerConfig.Name)
-			return errors.New(errMsg.Error())
+		if err != nil {
+			return err
 		}
 
-		err := handler.Init(handlerConfig, ep.method)
+		err = handler.Init(handlerConfig, ep.method)
 		if err != nil {
 			return err
 		}

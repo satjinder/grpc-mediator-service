@@ -29,6 +29,7 @@ type GenericServer struct {
 	GrpcServer           *grpc.Server
 	serviceDescriptorMap map[string]*GService
 	config               types.ServerConfig
+	handlerProvider      types.HandlerProvider
 }
 
 type GService struct {
@@ -36,11 +37,12 @@ type GService struct {
 	endpoints  map[string]*endpoint.Endpoint
 }
 
-func NewServer(config types.ServerConfig) (*GenericServer, error) {
+func NewServer(config types.ServerConfig, handlerProvider types.HandlerProvider) (*GenericServer, error) {
 	gs := &GenericServer{
 		GrpcServer:           grpc.NewServer(),
 		serviceDescriptorMap: make(map[string]*GService),
 		config:               config,
+		handlerProvider:      handlerProvider,
 	}
 
 	if err := gs.loadServices(); err != nil {
@@ -83,7 +85,7 @@ func (s *GenericServer) loadService(serviceProtoName string, registry *protoregi
 			method := methods.Get(m)
 			methodName := string(method.Name())
 			fmt.Println(" For method ", methodName)
-			ep, err := endpoint.NewEndpoint(method)
+			ep, err := endpoint.NewEndpoint(method, s.handlerProvider)
 			if err != nil {
 				fmt.Errorf("Could not load endpoint %v for service %v", methodName, srvName)
 				break

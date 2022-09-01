@@ -10,6 +10,14 @@ import (
 
 const ENDPOINT_CONTEXT_KEY = "endpoint"
 
+type HandlerProvider interface {
+	Get(name string) (Handler, error)
+}
+
+type SchemaRegistry interface {
+	Get(registryName string, protoFile string) *protoreflect.FileDescriptor
+}
+
 type Handler interface {
 	Init(handlerConfig *gpb.Handler, method protoreflect.MethodDescriptor) error
 	Process(epCtx context.Context) error
@@ -41,5 +49,5 @@ type GResponse struct {
 type HandlerContext struct {
 	HandlerConfig *gpb.Handler
 	Options       map[string]string
-	Fields     map[string]protoreflect.FieldDescriptor
+	Fields        map[string]protoreflect.FieldDescriptor
 }

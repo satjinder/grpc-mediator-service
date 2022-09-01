@@ -14,6 +14,7 @@ import (
 	"log"
 	"net"
 
+	"github.com/satjinder/grpc-mediator-service/defaulthandlers"
 	"github.com/satjinder/grpc-mediator-service/genericserver"
 	"github.com/satjinder/grpc-mediator-service/types"
 	//"github.com/satjinder/grpc-mediator-service/handlers/httpservicehandler"
@@ -37,7 +38,7 @@ func main() {
 	if err != nil {
 		log.Fatalf("failed to listen: %v", err)
 	}
-	gs, err := genericserver.NewServer(ServerConfig)
+	gs, err := genericserver.NewServer(ServerConfig, &defaulthandlers.DefaultProvider{})
 	if err != nil {
 		panic(err)
 	}

@@ -6,7 +6,8 @@ import (
 	"errors"
 	"fmt"
 
-	eh1 "github.com/satjinder/grpc-mediator-service/handlers/entitlementshandler/v1"
+	eh1 "github.com/satjinder/grpc-mediator-service/handlers/authorisationhandler/v1"
+	eh2 "github.com/satjinder/grpc-mediator-service/handlers/authorisationhandler/v2"
 	fh1 "github.com/satjinder/grpc-mediator-service/handlers/fileservicehandler/v1"
 	hh1 "github.com/satjinder/grpc-mediator-service/handlers/httpservicehandler/v1"
 	"github.com/satjinder/grpc-mediator-service/types"
@@ -61,8 +62,10 @@ func (ep *Endpoint) configureHandlers() error {
 		switch handlerConfig.Name {
 		case "http-backend":
 			handler = &hh1.Handler{}
-		case "entitlements":
+		case "authorisation":
 			handler = &eh1.Handler{}
+		case "authorisationv2":
+			handler = &eh2.Handler{}
 		case "file-backend":
 			handler = &fh1.Handler{}
 

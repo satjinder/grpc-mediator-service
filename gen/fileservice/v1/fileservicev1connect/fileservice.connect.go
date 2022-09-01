@@ -28,6 +28,7 @@ const (
 // FileAPIClient is a client for the med8r.schemas.samples.fileservice.v1.FileAPI service.
 type FileAPIClient interface {
 	GetJson(context.Context, *connect_go.Request[v1.GetJsonRequest]) (*connect_go.Response[v1.GetJsonResponse], error)
+	UnsupportedHandler(context.Context, *connect_go.Request[v1.GetJsonRequest]) (*connect_go.Response[v1.GetJsonResponse], error)
 }
 
 // NewFileAPIClient constructs a client for the med8r.schemas.samples.fileservice.v1.FileAPI
@@ -45,12 +46,18 @@ func NewFileAPIClient(httpClient connect_go.HTTPClient, baseURL string, opts ...
 			baseURL+"/med8r.schemas.samples.fileservice.v1.FileAPI/GetJson",
 			opts...,
 		),
+		unsupportedHandler: connect_go.NewClient[v1.GetJsonRequest, v1.GetJsonResponse](
+			httpClient,
+			baseURL+"/med8r.schemas.samples.fileservice.v1.FileAPI/UnsupportedHandler",
+			opts...,
+		),
 	}
 }
 
 // fileAPIClient implements FileAPIClient.
 type fileAPIClient struct {
-	getJson *connect_go.Client[v1.GetJsonRequest, v1.GetJsonResponse]
+	getJson            *connect_go.Client[v1.GetJsonRequest, v1.GetJsonResponse]
+	unsupportedHandler *connect_go.Client[v1.GetJsonRequest, v1.GetJsonResponse]
 }
 
 // GetJson calls med8r.schemas.samples.fileservice.v1.FileAPI.GetJson.
@@ -58,9 +65,15 @@ func (c *fileAPIClient) GetJson(ctx context.Context, req *connect_go.Request[v1.
 	return c.getJson.CallUnary(ctx, req)
 }
 
+// UnsupportedHandler calls med8r.schemas.samples.fileservice.v1.FileAPI.UnsupportedHandler.
+func (c *fileAPIClient) UnsupportedHandler(ctx context.Context, req *connect_go.Request[v1.GetJsonRequest]) (*connect_go.Response[v1.GetJsonResponse], error) {
+	return c.unsupportedHandler.CallUnary(ctx, req)
+}
+
 // FileAPIHandler is an implementation of the med8r.schemas.samples.fileservice.v1.FileAPI service.
 type FileAPIHandler interface {
 	GetJson(context.Context, *connect_go.Request[v1.GetJsonRequest]) (*connect_go.Response[v1.GetJsonResponse], error)
+	UnsupportedHandler(context.Context, *connect_go.Request[v1.GetJsonRequest]) (*connect_go.Response[v1.GetJsonResponse], error)
 }
 
 // NewFileAPIHandler builds an HTTP handler from the service implementation. It returns the path on
@@ -75,6 +88,11 @@ func NewFileAPIHandler(svc FileAPIHandler, opts ...connect_go.HandlerOption) (st
 		svc.GetJson,
 		opts...,
 	))
+	mux.Handle("/med8r.schemas.samples.fileservice.v1.FileAPI/UnsupportedHandler", connect_go.NewUnaryHandler(
+		"/med8r.schemas.samples.fileservice.v1.FileAPI/UnsupportedHandler",
+		svc.UnsupportedHandler,
+		opts...,
+	))
 	return "/med8r.schemas.samples.fileservice.v1.FileAPI/", mux
 }
 
@@ -83,4 +101,8 @@ type UnimplementedFileAPIHandler struct{}
 
 func (UnimplementedFileAPIHandler) GetJson(context.Context, *connect_go.Request[v1.GetJsonRequest]) (*connect_go.Response[v1.GetJsonResponse], error) {
 	return nil, connect_go.NewError(connect_go.CodeUnimplemented, errors.New("med8r.schemas.samples.fileservice.v1.FileAPI.GetJson is not implemented"))
+}
+
+func (UnimplementedFileAPIHandler) UnsupportedHandler(context.Context, *connect_go.Request[v1.GetJsonRequest]) (*connect_go.Response[v1.GetJsonResponse], error) {
+	return nil, connect_go.NewError(connect_go.CodeUnimplemented, errors.New("med8r.schemas.samples.fileservice.v1.FileAPI.UnsupportedHandler is not implemented"))
 }

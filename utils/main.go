@@ -2,9 +2,13 @@ package utils
 
 import (
 	"context"
+	"errors"
+	"fmt"
 
 	"github.com/satjinder/grpc-mediator-service/types"
+	gpb "go.buf.build/grpc/go/satjinder/schemas/gproto/v1"
 	"google.golang.org/protobuf/encoding/protojson"
+	"google.golang.org/protobuf/reflect/protoreflect"
 	"google.golang.org/protobuf/types/dynamicpb"
 )
 
@@ -39,4 +43,31 @@ func ConvertToOutput(epContext *types.EndpointContext, body []byte) (*dynamicpb.
 		return nil, err
 	}
 	return respmsg, nil
+}
+
+func SetHandlerContext(method protoreflect.MethodDescriptor, handlerConfig *gpb.Handler, fieldnames []string) (*types.HandlerContext, error) {
+	hc := &types.HandlerContext{
+		HandlerConfig: handlerConfig,
+		Options:       map[string]string{},
+		Fields:        map[string]protoreflect.FieldDescriptor{},
+	}
+
+	for _, opt := range handlerConfig.Options {
+		hc.Options[opt.Key] = opt.Value
+	}
+
+	md := method.Input()
+
+	for _, fn := range fieldnames {
+
+		fd := md.Fields().ByName(protoreflect.Name(hc.Options[fn]))
+		if fd == nil {
+			errM := fmt.Errorf("Required '%v' field not found for '%v'", fn, method.FullName())
+			return nil, errors.New(errM.Error())
+		}
+		hc.Fields[fn] = fd
+
+	}
+
+	return hc, nil
 }

@@ -10,7 +10,7 @@ require (
 
 require (
 	github.com/golang/protobuf v1.5.2 // indirect
-	go.buf.build/grpc/go/satjinder/schemas v1.4.5 // indirect
+	go.buf.build/grpc/go/satjinder/schemas v1.4.7 // indirect
 	golang.org/x/net v0.0.0-20220520000938-2e3eb7b945c2 // indirect
 	golang.org/x/sys v0.0.0-20220727055044-e65921a090b8 // indirect
 	golang.org/x/text v0.3.7 // indirect

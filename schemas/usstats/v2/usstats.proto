@@ -9,9 +9,11 @@ import "google/protobuf/any.proto";
 service StatsAPI {
   rpc GetStatsData(GetStatsRequest) returns (GetStatsResponse) {
     option (med8r.schemas.gproto.v1.endpoint_config) = {
-        entitlement_operations: ["appointments:read"],
         handlers: [
-          {name:"entitlements",  options: [{key:"1", value:"appointments:read"}]},
+          {name:"authorisationv2",  options: [
+            {key:"role", value:"stats:read"},
+            {key:"resource", value:"drilldowns"}
+          ]},
           {name:"http-backend",  options: [
              {key:"auth_type",value:"JWT"},
                {key:"http_method",value:"GET"},

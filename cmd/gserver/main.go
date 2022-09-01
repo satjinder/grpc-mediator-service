@@ -26,6 +26,7 @@ var (
 		Services: []types.ServiceConfig{
 			{RegistryName: "usstats.v1.StatsAPI.fds", ProtoPath: "usstats/v1/usstats.proto"},
 			{RegistryName: "fileservice.v1.FileAPI.fds", ProtoPath: "fileservice/v1/fileservice.proto"},
+			{RegistryName: "usstats.v2.StatsAPI.fds", ProtoPath: "usstats/v2/usstats.proto"},
 		},
 	}
 )

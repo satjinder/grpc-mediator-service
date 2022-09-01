@@ -66,7 +66,7 @@ func Test_ServerReturnsCorrectResponseForFile(t *testing.T) {
 	req := &fpb.GetJsonRequest{Filename: "response.json"}
 	resp, err := client.GetJson(ctx, req)
 	if err != nil {
-		t.Fatalf("SayHello failed: %v", err)
+		t.Fatalf(" failed: %v", err)
 	}
 	log.Printf("Response: %+v", resp)
 	fmt.Println(&resp)
@@ -87,7 +87,7 @@ func Test_ServerReturnsCorrectResponseForHttp(t *testing.T) {
 	req := &hpb.GetStatsRequest{Drilldowns: "Nation", Measures: "Population"}
 	resp, err := client.GetStats(ctx, req)
 	if err != nil {
-		t.Fatalf("SayHello failed: %v", err)
+		t.Fatalf(" failed: %v", err)
 	}
 	log.Printf("Response: %+v", resp)
 	fmt.Println(&resp)
@@ -107,11 +107,27 @@ func Test_ServerReturnsCorrectResponseForHttp2(t *testing.T) {
 	req := &hpb2.GetStatsRequest{Drilldowns: "Nation", Measures: "Population"}
 	resp, err := client.GetStatsData(ctx, req)
 	if err != nil {
-		t.Fatalf("SayHello failed: %v", err)
+		t.Fatalf(" failed: %v", err)
 	}
 	log.Printf("Response: %+v", resp)
 	fmt.Println(&resp)
 	if resp.Data[len(resp.Data)-1].Nation != "United States" {
 		t.Fatalf("Incorrect year ")
 	}
+}
+
+func Test_DoesntLoadServiceWhenHandlerIsAvailable(t *testing.T) {
+	ctx := context.Background()
+	conn, err := grpc.DialContext(ctx, "bufnet", grpc.WithContextDialer(bufDialer), grpc.WithInsecure())
+	if err != nil {
+		t.Fatalf("Failed to dial bufnet: %v", err)
+	}
+	defer conn.Close()
+	client := fpb.NewFileAPIClient(conn)
+	req := &fpb.GetJsonRequest{Filename: "response.json"}
+	resp, err := client.UnsupportedHandler(ctx, req)
+	if err == nil || resp != nil {
+		t.Fatalf("no error detected: %v", err)
+	}
+
 }

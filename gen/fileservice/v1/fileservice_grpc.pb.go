@@ -23,6 +23,7 @@ const _ = grpc.SupportPackageIsVersion7
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type FileAPIClient interface {
 	GetJson(ctx context.Context, in *GetJsonRequest, opts ...grpc.CallOption) (*GetJsonResponse, error)
+	UnsupportedHandler(ctx context.Context, in *GetJsonRequest, opts ...grpc.CallOption) (*GetJsonResponse, error)
 }
 
 type fileAPIClient struct {
@@ -42,11 +43,21 @@ func (c *fileAPIClient) GetJson(ctx context.Context, in *GetJsonRequest, opts ..
 	return out, nil
 }
 
+func (c *fileAPIClient) UnsupportedHandler(ctx context.Context, in *GetJsonRequest, opts ...grpc.CallOption) (*GetJsonResponse, error) {
+	out := new(GetJsonResponse)
+	err := c.cc.Invoke(ctx, "/med8r.schemas.samples.fileservice.v1.FileAPI/UnsupportedHandler", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // FileAPIServer is the server API for FileAPI service.
 // All implementations must embed UnimplementedFileAPIServer
 // for forward compatibility
 type FileAPIServer interface {
 	GetJson(context.Context, *GetJsonRequest) (*GetJsonResponse, error)
+	UnsupportedHandler(context.Context, *GetJsonRequest) (*GetJsonResponse, error)
 	mustEmbedUnimplementedFileAPIServer()
 }
 
@@ -56,6 +67,9 @@ type UnimplementedFileAPIServer struct {
 
 func (UnimplementedFileAPIServer) GetJson(context.Context, *GetJsonRequest) (*GetJsonResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetJson not implemented")
+}
+func (UnimplementedFileAPIServer) UnsupportedHandler(context.Context, *GetJsonRequest) (*GetJsonResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method UnsupportedHandler not implemented")
 }
 func (UnimplementedFileAPIServer) mustEmbedUnimplementedFileAPIServer() {}
 
@@ -88,6 +102,24 @@ func _FileAPI_GetJson_Handler(srv interface{}, ctx context.Context, dec func(int
 	return interceptor(ctx, in, info, handler)
 }
 
+func _FileAPI_UnsupportedHandler_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetJsonRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(FileAPIServer).UnsupportedHandler(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/med8r.schemas.samples.fileservice.v1.FileAPI/UnsupportedHandler",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(FileAPIServer).UnsupportedHandler(ctx, req.(*GetJsonRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // FileAPI_ServiceDesc is the grpc.ServiceDesc for FileAPI service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -98,6 +130,10 @@ var FileAPI_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "GetJson",
 			Handler:    _FileAPI_GetJson_Handler,
+		},
+		{
+			MethodName: "UnsupportedHandler",
+			Handler:    _FileAPI_UnsupportedHandler_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

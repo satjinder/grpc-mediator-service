@@ -37,3 +37,9 @@ type GRequest struct {
 type GResponse struct {
 	Message *dynamicpb.Message
 }
+
+type HandlerContext struct {
+	HandlerConfig *gpb.Handler
+	Options       map[string]string
+	Fields     map[string]protoreflect.FieldDescriptor
+}

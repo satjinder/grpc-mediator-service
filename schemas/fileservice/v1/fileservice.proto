@@ -7,10 +7,16 @@ import "gproto/v1/gproto.proto";
 service FileAPI {
   rpc GetJson(GetJsonRequest) returns (GetJsonResponse) {
     option (med8r.schemas.gproto.v1.endpoint_config) = {
-        entitlement_operations: ["appointments:read"],
         handlers: [
-          {name:"entitlements",  options: [{key:"1", value:"appointments:read"}]},
           {name:"file-backend",  options: [{key:"filename",value:"filename"}]}
+        ],
+    };
+  }
+  
+  rpc UnsupportedHandler(GetJsonRequest) returns (GetJsonResponse) {
+    option (med8r.schemas.gproto.v1.endpoint_config) = {
+        handlers: [
+          {name:"unsupported",  options: [{key:"something",value:"something"}]}
         ],
     };
   }

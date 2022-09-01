@@ -18,7 +18,7 @@ type Handler struct {
 }
 
 func (handler *Handler) Process(ctx context.Context) error {
-	fmt.Println("check entitlements")
+	fmt.Println("check auth v1")
 
 	// val := ctx.Value(types.ENDPOINT_CONTEXT_KEY)
 	// epContext := val.(*types.EndpointContext)

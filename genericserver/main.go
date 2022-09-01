@@ -86,6 +86,7 @@ func (s *GenericServer) loadService(serviceProtoName string, registry *protoregi
 			ep, err := endpoint.NewEndpoint(method)
 			if err != nil {
 				fmt.Errorf("Could not load endpoint %v for service %v", methodName, srvName)
+				break
 			}
 			rsd.endpoints[string(methodName)] = ep
 			gsd.Methods = append(gsd.Methods, grpc.MethodDesc{MethodName: methodName, Handler: s.Handler})

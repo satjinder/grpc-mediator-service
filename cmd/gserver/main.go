@@ -24,8 +24,8 @@ var (
 	ServerConfig = types.ServerConfig{
 		DescriptorSetDir: flag.String("descriptor-sets", "gen/descriptor-sets", "directory containing all descriptor sets to load"),
 		Services: []types.ServiceConfig{
-			{RegistryName: "usstats.StatsAPI.fds", ProtoPath: "usstats/usstats.proto"},
-			{RegistryName: "fileservice.FileAPI.fds", ProtoPath: "fileservice/fileservice.proto"},
+			{RegistryName: "usstats.v1.StatsAPI.fds", ProtoPath: "usstats/v1/usstats.proto"},
+			{RegistryName: "fileservice.v1.FileAPI.fds", ProtoPath: "fileservice/v1/fileservice.proto"},
 		},
 	}
 )

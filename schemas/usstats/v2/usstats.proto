@@ -1,14 +1,14 @@
 syntax = "proto3";
-package usstats;
+package med8r.schemas.samples.usstats.v2;
 
 import "google/protobuf/descriptor.proto";
-import "gprotos/gproto.proto";
+import "gproto/v1/gproto.proto";
 import "google/protobuf/any.proto";
 
 
 service StatsAPI {
-  rpc GetStats(GetStatsRequest) returns (GetStatsResponse) {
-    option (gproto.endpoint_config) = {
+  rpc GetStatsData(GetStatsRequest) returns (GetStatsResponse) {
+    option (med8r.schemas.gproto.v1.endpoint_config) = {
         entitlement_operations: ["appointments:read"],
         handlers: [
           {name:"entitlements",  options: [{key:"1", value:"appointments:read"}]},

@@ -8,9 +8,10 @@ import (
 	"net"
 	"testing"
 
-	fpb "github.com/satjinder/grpc-mediator-service/gen/fileservice"
-	hpb "github.com/satjinder/grpc-mediator-service/gen/usstats"
 	"github.com/satjinder/grpc-mediator-service/types"
+	fpb "go.buf.build/grpc/go/satjinder/schemas/fileservice/v1"
+	hpb "go.buf.build/grpc/go/satjinder/schemas/usstats/v1"
+	hpb2 "go.buf.build/grpc/go/satjinder/schemas/usstats/v2"
 
 	//"google.golang.org/protobuf/types/dynamicpb"
 	//"google.golang.org/protobuf/encoding/protojson"
@@ -31,8 +32,9 @@ func init() {
 	gs, err := NewServer(types.ServerConfig{
 		DescriptorSetDir: flag.String("descriptor-sets", "/Users/baths/src/mediator-service/gen/descriptor-sets", "directory containing all descriptor sets to load"),
 		Services: []types.ServiceConfig{
-			{RegistryName: "usstats.StatsAPI.fds", ProtoPath: "usstats/usstats.proto"},
-			{RegistryName: "fileservice.FileAPI.fds", ProtoPath: "fileservice/fileservice.proto"},
+			{RegistryName: "usstats.v1.StatsAPI.fds", ProtoPath: "usstats/v1/usstats.proto"},
+			{RegistryName: "usstats.v2.StatsAPI.fds", ProtoPath: "usstats/v2/usstats.proto"},
+			{RegistryName: "fileservice.v1.FileAPI.fds", ProtoPath: "fileservice/v1/fileservice.proto"},
 		},
 	})
 
@@ -84,6 +86,26 @@ func Test_ServerReturnsCorrectResponseForHttp(t *testing.T) {
 	client := hpb.NewStatsAPIClient(conn)
 	req := &hpb.GetStatsRequest{Drilldowns: "Nation", Measures: "Population"}
 	resp, err := client.GetStats(ctx, req)
+	if err != nil {
+		t.Fatalf("SayHello failed: %v", err)
+	}
+	log.Printf("Response: %+v", resp)
+	fmt.Println(&resp)
+	if resp.Data[len(resp.Data)-1].Nation != "United States" {
+		t.Fatalf("Incorrect year ")
+	}
+}
+
+func Test_ServerReturnsCorrectResponseForHttp2(t *testing.T) {
+	ctx := context.Background()
+	conn, err := grpc.DialContext(ctx, "bufnet", grpc.WithContextDialer(bufDialer), grpc.WithInsecure())
+	if err != nil {
+		t.Fatalf("Failed to dial bufnet: %v", err)
+	}
+	defer conn.Close()
+	client := hpb2.NewStatsAPIClient(conn)
+	req := &hpb2.GetStatsRequest{Drilldowns: "Nation", Measures: "Population"}
+	resp, err := client.GetStatsData(ctx, req)
 	if err != nil {
 		t.Fatalf("SayHello failed: %v", err)
 	}

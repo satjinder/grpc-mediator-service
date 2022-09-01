@@ -113,6 +113,7 @@ func (s *GenericServer) Handler(srv interface{}, ctx context.Context, dec func(i
 func (s *GenericServer) createProtoRegistry(path string) (*protoregistry.Files, error) {
 	marshalledDescriptorSet, err := ioutil.ReadFile(path)
 	if err != nil {
+		fmt.Println(err)
 		return nil, err
 	}
 	descriptorSet := descriptorpb.FileDescriptorSet{}

@@ -2,7 +2,7 @@ version: v1
 managed:
   enabled: true
   go_package_prefix:
-    default: github.com/satjinder/grpc-mediator-service/gen
+    default: go.buf.build/grpc/go/satjinder/schemas
 plugins:
   - name: go
     out: gen

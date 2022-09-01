@@ -3,7 +3,7 @@ package types
 import (
 	"context"
 
-	gpb "github.com/satjinder/grpc-mediator-service/gen/gprotos"
+	gpb "go.buf.build/grpc/go/satjinder/schemas/gproto/v1"
 	"google.golang.org/protobuf/reflect/protoreflect"
 	"google.golang.org/protobuf/types/dynamicpb"
 )

@@ -7,9 +7,9 @@ import (
 	"io/ioutil"
 	"os"
 
-	gpb "github.com/satjinder/grpc-mediator-service/gen/gprotos"
 	"github.com/satjinder/grpc-mediator-service/types"
 	"github.com/satjinder/grpc-mediator-service/utils"
+	gpb "go.buf.build/grpc/go/satjinder/schemas/gproto/v1"
 	"google.golang.org/protobuf/reflect/protoreflect"
 	"google.golang.org/protobuf/types/dynamicpb"
 )

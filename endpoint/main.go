@@ -6,11 +6,11 @@ import (
 	"errors"
 	"fmt"
 
-	gpb "github.com/satjinder/grpc-mediator-service/gen/gprotos"
 	"github.com/satjinder/grpc-mediator-service/handlers/entitlementshandler"
 	"github.com/satjinder/grpc-mediator-service/handlers/fileservicehandler"
 	"github.com/satjinder/grpc-mediator-service/handlers/httpservicehandler"
 	"github.com/satjinder/grpc-mediator-service/types"
+	gpb "go.buf.build/grpc/go/satjinder/schemas/gproto/v1"
 	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/reflect/protoreflect"
 	"google.golang.org/protobuf/types/dynamicpb"

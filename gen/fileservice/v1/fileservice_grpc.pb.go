@@ -2,9 +2,9 @@
 // versions:
 // - protoc-gen-go-grpc v1.2.0
 // - protoc             (unknown)
-// source: fileservice/fileservice.proto
+// source: fileservice/v1/fileservice.proto
 
-package fileservice
+package fileservicev1
 
 import (
 	context "context"
@@ -35,7 +35,7 @@ func NewFileAPIClient(cc grpc.ClientConnInterface) FileAPIClient {
 
 func (c *fileAPIClient) GetJson(ctx context.Context, in *GetJsonRequest, opts ...grpc.CallOption) (*GetJsonResponse, error) {
 	out := new(GetJsonResponse)
-	err := c.cc.Invoke(ctx, "/fileservice.FileAPI/GetJson", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/med8r.schemas.samples.fileservice.v1.FileAPI/GetJson", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -80,7 +80,7 @@ func _FileAPI_GetJson_Handler(srv interface{}, ctx context.Context, dec func(int
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/fileservice.FileAPI/GetJson",
+		FullMethod: "/med8r.schemas.samples.fileservice.v1.FileAPI/GetJson",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(FileAPIServer).GetJson(ctx, req.(*GetJsonRequest))
@@ -92,7 +92,7 @@ func _FileAPI_GetJson_Handler(srv interface{}, ctx context.Context, dec func(int
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
 var FileAPI_ServiceDesc = grpc.ServiceDesc{
-	ServiceName: "fileservice.FileAPI",
+	ServiceName: "med8r.schemas.samples.fileservice.v1.FileAPI",
 	HandlerType: (*FileAPIServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{
@@ -101,5 +101,5 @@ var FileAPI_ServiceDesc = grpc.ServiceDesc{
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
-	Metadata: "fileservice/fileservice.proto",
+	Metadata: "fileservice/v1/fileservice.proto",
 }

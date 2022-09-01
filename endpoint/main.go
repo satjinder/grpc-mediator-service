@@ -6,9 +6,9 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/satjinder/grpc-mediator-service/handlers/entitlementshandler"
-	"github.com/satjinder/grpc-mediator-service/handlers/fileservicehandler"
-	"github.com/satjinder/grpc-mediator-service/handlers/httpservicehandler"
+	eh1 "github.com/satjinder/grpc-mediator-service/handlers/entitlementshandler/v1"
+	fh1 "github.com/satjinder/grpc-mediator-service/handlers/fileservicehandler/v1"
+	hh1 "github.com/satjinder/grpc-mediator-service/handlers/httpservicehandler/v1"
 	"github.com/satjinder/grpc-mediator-service/types"
 	gpb "go.buf.build/grpc/go/satjinder/schemas/gproto/v1"
 	"google.golang.org/protobuf/proto"
@@ -60,11 +60,11 @@ func (ep *Endpoint) configureHandlers() error {
 	for _, handlerConfig := range ep.endpointConfig.Handlers {
 		switch handlerConfig.Name {
 		case "http-backend":
-			handler = &httpservicehandler.Handler{}
+			handler = &hh1.Handler{}
 		case "entitlements":
-			handler = &entitlementshandler.Handler{}
+			handler = &eh1.Handler{}
 		case "file-backend":
-			handler = &fileservicehandler.Handler{}
+			handler = &fh1.Handler{}
 
 		default:
 			errMsg := fmt.Errorf("Handler not found %v", handlerConfig.Name)

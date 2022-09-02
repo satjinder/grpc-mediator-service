@@ -2,14 +2,13 @@ package fileservicehandler
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"io/ioutil"
 	"os"
 
-	gpb "github.com/satjinder/grpc-mediator-service/gen/gprotos"
 	"github.com/satjinder/grpc-mediator-service/types"
 	"github.com/satjinder/grpc-mediator-service/utils"
+	gpb "go.buf.build/grpc/go/satjinder/schemas/gproto/v1"
 	"google.golang.org/protobuf/reflect/protoreflect"
 	"google.golang.org/protobuf/types/dynamicpb"
 )
@@ -17,36 +16,24 @@ import (
 const FileName = "filename"
 
 func (handler *Handler) Init(handlerConfig *gpb.Handler, method protoreflect.MethodDescriptor) error {
-	handler.HandlerConfig = handlerConfig
-	handler.Options = map[string]string{}
-
-	for _, opt := range handlerConfig.Options {
-		handler.Options[opt.Key] = opt.Value
+	hctx, err := utils.SetHandlerContext(method, handlerConfig, []string{FileName})
+	if err != nil {
+		return err
 	}
-
-	md := method.Input()
-	fd := md.Fields().ByName(protoreflect.Name(handler.Options[FileName]))
-	if fd == nil {
-		errM := fmt.Errorf("Required '%v' field not found for '%v' by fileservicehandler", handler.Options[FileName], method.FullName())
-		return errors.New(errM.Error())
-	}
-	handler.FileNameField = fd
-
+	handler.Context = hctx
 	return nil
 }
 
 type Handler struct {
-	HandlerConfig *gpb.Handler
-	Options       map[string]string
-	FileNameField protoreflect.FieldDescriptor
+	Context *types.HandlerContext
 }
 
 func (handler *Handler) Process(epCtx context.Context) error {
-	fmt.Println(handler.HandlerConfig)
+	fmt.Println(handler.Context.HandlerConfig)
 	val := epCtx.Value(types.ENDPOINT_CONTEXT_KEY)
 	epContext := val.(*types.EndpointContext)
 
-	filename := epContext.Request.Message.Get(handler.FileNameField).String()
+	filename := epContext.Request.Message.Get(handler.Context.Fields[FileName]).String()
 	fmt.Println(filename)
 	jsonBytes, _ := CallExternalAPI(filename)
 	outputDesc := epContext.EndpointDescriptor.Output()

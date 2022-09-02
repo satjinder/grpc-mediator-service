@@ -1,2 +1,8 @@
 version: v1
 name: buf.build/satjinder/schemas
+lint:
+  use:
+    - DEFAULT
+breaking:
+  use:
+    - FILE

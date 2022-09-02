@@ -14,18 +14,21 @@ import (
 	"log"
 	"net"
 
+	"github.com/satjinder/grpc-mediator-service/defaulthandlers"
 	"github.com/satjinder/grpc-mediator-service/genericserver"
+	lsm "github.com/satjinder/grpc-mediator-service/schemaregistry/local"
 	"github.com/satjinder/grpc-mediator-service/types"
 	//"github.com/satjinder/grpc-mediator-service/handlers/httpservicehandler"
 )
 
 var (
-	port         = flag.Int("port", 50051, "The server port")
-	ServerConfig = types.ServerConfig{
-		DescriptorSetDir: flag.String("descriptor-sets", "gen/descriptor-sets", "directory containing all descriptor sets to load"),
+	port             = flag.Int("port", 50051, "The server port")
+	descriptorSetDir = flag.String("descriptor-sets", "gen/descriptor-sets", "directory containing all descriptor sets to load")
+	serverConfig     = types.ServerConfig{
 		Services: []types.ServiceConfig{
-			{RegistryName: "usstats.StatsAPI.fds", ProtoPath: "usstats/usstats.proto"},
-			{RegistryName: "fileservice.FileAPI.fds", ProtoPath: "fileservice/fileservice.proto"},
+			{RegistryName: "usstats.v1.StatsAPI.fds", ProtoPath: "usstats/v1/usstats.proto"},
+			{RegistryName: "fileservice.v1.FileAPI.fds", ProtoPath: "fileservice/v1/fileservice.proto"},
+			{RegistryName: "usstats.v2.StatsAPI.fds", ProtoPath: "usstats/v2/usstats.proto"},
 		},
 	}
 )
@@ -36,7 +39,7 @@ func main() {
 	if err != nil {
 		log.Fatalf("failed to listen: %v", err)
 	}
-	gs, err := genericserver.NewServer(ServerConfig)
+	gs, err := genericserver.NewServer(serverConfig, &defaulthandlers.DefaultProvider{}, lsm.New(*descriptorSetDir))
 	if err != nil {
 		panic(err)
 	}

@@ -6,8 +6,9 @@ import (
 	"log"
 	"time"
 
-	fpb "github.com/satjinder/grpc-mediator-service/gen/fileservice"
-	hpb "github.com/satjinder/grpc-mediator-service/gen/usstats"
+	fpb "go.buf.build/grpc/go/satjinder/schemas/fileservice/v1"
+	hpb "go.buf.build/grpc/go/satjinder/schemas/usstats/v1"
+	hpb2 "go.buf.build/grpc/go/satjinder/schemas/usstats/v2"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 )
@@ -31,6 +32,7 @@ func main() {
 	defer conn.Close()
 	// Contact the server and print out its response.
 	WithHttp(conn)
+	WithHttp2(conn)
 	WithFile(conn)
 }
 
@@ -40,6 +42,19 @@ func WithHttp(conn *grpc.ClientConn) {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
 	defer cancel()
 	r, err := c.GetStats(ctx, &hpb.GetStatsRequest{Drilldowns: "Nation", Measures: "Population"})
+	if err != nil {
+		log.Fatalf("failed: %v", err)
+	}
+
+	log.Println(r)
+}
+
+func WithHttp2(conn *grpc.ClientConn) {
+	c := hpb2.NewStatsAPIClient(conn)
+
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
+	defer cancel()
+	r, err := c.GetStatsData(ctx, &hpb2.GetStatsRequest{Drilldowns: "Nation", Measures: "Population"})
 	if err != nil {
 		log.Fatalf("failed: %v", err)
 	}

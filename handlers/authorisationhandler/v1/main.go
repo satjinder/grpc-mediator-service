@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 
-	gpb "github.com/satjinder/grpc-mediator-service/gen/gprotos"
+	gpb "go.buf.build/grpc/go/satjinder/schemas/gproto/v1"
 	"google.golang.org/protobuf/reflect/protoreflect"
 )
 
@@ -18,7 +18,7 @@ type Handler struct {
 }
 
 func (handler *Handler) Process(ctx context.Context) error {
-	fmt.Println("check entitlements")
+	fmt.Println("check auth v1")
 
 	// val := ctx.Value(types.ENDPOINT_CONTEXT_KEY)
 	// epContext := val.(*types.EndpointContext)

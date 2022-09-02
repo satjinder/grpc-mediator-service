@@ -1,16 +1,22 @@
 syntax = "proto3";
-package fileservice;
+package med8r.schemas.samples.fileservice.v1;
 
 import "google/protobuf/descriptor.proto";
-import "gprotos/gproto.proto";
+import "gproto/v1/gproto.proto";
 
 service FileAPI {
   rpc GetJson(GetJsonRequest) returns (GetJsonResponse) {
-    option (gproto.endpoint_config) = {
-        entitlement_operations: ["appointments:read"],
+    option (med8r.schemas.gproto.v1.endpoint_config) = {
         handlers: [
-          {name:"entitlements",  options: [{key:"1", value:"appointments:read"}]},
           {name:"file-backend",  options: [{key:"filename",value:"filename"}]}
+        ],
+    };
+  }
+  
+  rpc UnsupportedHandler(GetJsonRequest) returns (GetJsonResponse) {
+    option (med8r.schemas.gproto.v1.endpoint_config) = {
+        handlers: [
+          {name:"unsupported",  options: [{key:"something",value:"something"}]}
         ],
     };
   }

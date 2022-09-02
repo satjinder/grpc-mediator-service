@@ -6,7 +6,6 @@ package genericserver
 
 import (
 	"context"
-	"path/filepath"
 	"strings"
 
 	//"encoding/json"
@@ -29,6 +28,8 @@ type GenericServer struct {
 	GrpcServer           *grpc.Server
 	serviceDescriptorMap map[string]*GService
 	config               types.ServerConfig
+	handlerProvider      types.HandlerProvider
+	schemaRegistry       types.SchemaRegistry
 }
 
 type GService struct {
@@ -36,11 +37,13 @@ type GService struct {
 	endpoints  map[string]*endpoint.Endpoint
 }
 
-func NewServer(config types.ServerConfig) (*GenericServer, error) {
+func NewServer(config types.ServerConfig, handlerProvider types.HandlerProvider, schemaRegistry types.SchemaRegistry) (*GenericServer, error) {
 	gs := &GenericServer{
 		GrpcServer:           grpc.NewServer(),
 		serviceDescriptorMap: make(map[string]*GService),
 		config:               config,
+		handlerProvider:      handlerProvider,
+		schemaRegistry:       schemaRegistry,
 	}
 
 	if err := gs.loadServices(); err != nil {
@@ -52,25 +55,18 @@ func NewServer(config types.ServerConfig) (*GenericServer, error) {
 
 func (s *GenericServer) loadServices() error {
 	for _, f := range s.config.Services {
-		fdsFile := filepath.Join(*s.config.DescriptorSetDir, f.RegistryName)
-		registry, err := s.createProtoRegistry(fdsFile)
+		registry, err := s.schemaRegistry.Get(f.RegistryName, f.ProtoPath)
 		if err != nil {
 			return err
 		}
-		if err := s.loadService(f.ProtoPath, registry); err != nil {
+		if err := s.loadService(f.ProtoPath, registry.Services()); err != nil {
 			return err
 		}
 	}
 	return nil
 }
 
-func (s *GenericServer) loadService(serviceProtoName string, registry *protoregistry.Files) error {
-	fd, err := registry.FindFileByPath(serviceProtoName)
-	if err != nil {
-		return err
-	}
-	services := fd.Services()
-
+func (s *GenericServer) loadService(serviceProtoName string, services protoreflect.ServiceDescriptors) error {
 	for i := 0; i < services.Len(); i++ {
 		rsd := &GService{descriptor: services.Get(i), endpoints: make(map[string]*endpoint.Endpoint)}
 		srvName := string(rsd.descriptor.FullName())
@@ -83,9 +79,10 @@ func (s *GenericServer) loadService(serviceProtoName string, registry *protoregi
 			method := methods.Get(m)
 			methodName := string(method.Name())
 			fmt.Println(" For method ", methodName)
-			ep, err := endpoint.NewEndpoint(method)
+			ep, err := endpoint.NewEndpoint(method, s.handlerProvider)
 			if err != nil {
 				fmt.Errorf("Could not load endpoint %v for service %v", methodName, srvName)
+				break
 			}
 			rsd.endpoints[string(methodName)] = ep
 			gsd.Methods = append(gsd.Methods, grpc.MethodDesc{MethodName: methodName, Handler: s.Handler})
@@ -113,6 +110,7 @@ func (s *GenericServer) Handler(srv interface{}, ctx context.Context, dec func(i
 func (s *GenericServer) createProtoRegistry(path string) (*protoregistry.Files, error) {
 	marshalledDescriptorSet, err := ioutil.ReadFile(path)
 	if err != nil {
+		fmt.Println(err)
 		return nil, err
 	}
 	descriptorSet := descriptorpb.FileDescriptorSet{}

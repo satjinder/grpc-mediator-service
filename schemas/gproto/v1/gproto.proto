@@ -1,5 +1,5 @@
 syntax = "proto3";
-package gproto;
+package med8r.schemas.gproto.v1;
 
 import "google/protobuf/descriptor.proto";
 

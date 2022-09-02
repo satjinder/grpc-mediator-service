@@ -3,12 +3,20 @@ package types
 import (
 	"context"
 
-	gpb "github.com/satjinder/grpc-mediator-service/gen/gprotos"
+	gpb "go.buf.build/grpc/go/satjinder/schemas/gproto/v1"
 	"google.golang.org/protobuf/reflect/protoreflect"
 	"google.golang.org/protobuf/types/dynamicpb"
 )
 
 const ENDPOINT_CONTEXT_KEY = "endpoint"
+
+type HandlerProvider interface {
+	Get(name string) (Handler, error)
+}
+
+type SchemaRegistry interface {
+	Get(registryName string, protoFile string) (protoreflect.FileDescriptor, error)
+}
 
 type Handler interface {
 	Init(handlerConfig *gpb.Handler, method protoreflect.MethodDescriptor) error
@@ -22,8 +30,7 @@ type EndpointContext struct {
 }
 
 type ServerConfig struct {
-	DescriptorSetDir *string
-	Services         []ServiceConfig
+	Services []ServiceConfig
 }
 type ServiceConfig struct {
 	RegistryName string
@@ -36,4 +43,10 @@ type GRequest struct {
 
 type GResponse struct {
 	Message *dynamicpb.Message
+}
+
+type HandlerContext struct {
+	HandlerConfig *gpb.Handler
+	Options       map[string]string
+	Fields        map[string]protoreflect.FieldDescriptor
 }

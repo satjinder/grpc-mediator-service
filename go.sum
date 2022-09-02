@@ -53,6 +53,10 @@ github.com/rogpeppe/fastuuid v1.2.0/go.mod h1:jVj6XXZzXRy/MSR5jhDC/2q6DgLz+nrA6L
 github.com/stretchr/objx v0.1.0/go.mod h1:HFkY916IF+rwdDfMAkV7OtwuqBVzrE8GR6GFx+wExME=
 github.com/stretchr/testify v1.5.1/go.mod h1:5W2xD1RspED5o8YsWQXVCued0rvSQ+mT+I5cxcmMvtA=
 github.com/stretchr/testify v1.7.0/go.mod h1:6Fq8oRcR53rry900zMqJjRRixrwX3KX962/h/Wwjteg=
+go.buf.build/bufbuild/connect-go/bufbuild/buf v1.7.133 h1:TT2MBJ0y+35FPwiSNxo30s9gCzeP5GVlJSnkjR9kaqU=
+go.buf.build/bufbuild/connect-go/bufbuild/buf v1.7.133/go.mod h1:RhEbXWvfibbP8jHBONztC21fqk4yrX0J/Yxzw62zXgA=
+go.buf.build/grpc/go/bufbuild/buf v1.4.133 h1:8NAWuOQBzhCSHqzV69uKKwV+YERerkCEUKnFy8iSmF4=
+go.buf.build/grpc/go/bufbuild/buf v1.4.133/go.mod h1:5c4sst+IYAD/Rr7LFqU81CY39tKe5TKNQkVN4Q8tA/c=
 go.buf.build/grpc/go/satjinder/schemas v1.4.2 h1:wPon3vYKNRQRPcvtpzkjSrIldGOY7G6t3Kv5h0kwREk=
 go.buf.build/grpc/go/satjinder/schemas v1.4.2/go.mod h1:SuBhNKKc8GFIvAdtXhsszfuTOHjPqdNpuGXToAjclYE=
 go.buf.build/grpc/go/satjinder/schemas v1.4.3 h1:443PUeuOWNR4NgCtMVhxly89PorexhoLWQ6zZB2qgFY=

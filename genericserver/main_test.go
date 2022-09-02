@@ -8,7 +8,7 @@ import (
 	"testing"
 
 	"github.com/satjinder/grpc-mediator-service/defaulthandlers"
-	lsm "github.com/satjinder/grpc-mediator-service/schemaregistry/local"
+	bsr "github.com/satjinder/grpc-mediator-service/schemaregistry/bsr"
 	"github.com/satjinder/grpc-mediator-service/types"
 	fpb "go.buf.build/grpc/go/satjinder/schemas/fileservice/v1"
 	hpb "go.buf.build/grpc/go/satjinder/schemas/usstats/v1"
@@ -30,7 +30,7 @@ func init() {
 
 	lis = bufconn.Listen(bufSize)
 
-	descriptorSetDir := "../gen/descriptor-sets"
+	//descriptorSetDir := "../gen/descriptor-sets"
 	gs, err := NewServer(types.ServerConfig{
 
 		Services: []types.ServiceConfig{
@@ -38,7 +38,7 @@ func init() {
 			{RegistryName: "usstats.v2.StatsAPI.fds", ProtoPath: "usstats/v2/usstats.proto"},
 			{RegistryName: "fileservice.v1.FileAPI.fds", ProtoPath: "fileservice/v1/fileservice.proto"},
 		},
-	}, &defaulthandlers.DefaultProvider{}, lsm.New(descriptorSetDir))
+	}, &defaulthandlers.DefaultProvider{}, bsr.New())
 
 	if err != nil {
 		panic(err)

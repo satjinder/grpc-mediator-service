@@ -2,13 +2,13 @@ package genericserver
 
 import (
 	"context"
-	"flag"
 	"fmt"
 	"log"
 	"net"
 	"testing"
 
 	"github.com/satjinder/grpc-mediator-service/defaulthandlers"
+	lsm "github.com/satjinder/grpc-mediator-service/schemaregistry/local"
 	"github.com/satjinder/grpc-mediator-service/types"
 	fpb "go.buf.build/grpc/go/satjinder/schemas/fileservice/v1"
 	hpb "go.buf.build/grpc/go/satjinder/schemas/usstats/v1"
@@ -30,14 +30,15 @@ func init() {
 
 	lis = bufconn.Listen(bufSize)
 
+	descriptorSetDir := "../gen/descriptor-sets"
 	gs, err := NewServer(types.ServerConfig{
-		DescriptorSetDir: flag.String("descriptor-sets", "/Users/baths/src/mediator-service/gen/descriptor-sets", "directory containing all descriptor sets to load"),
+
 		Services: []types.ServiceConfig{
 			{RegistryName: "usstats.v1.StatsAPI.fds", ProtoPath: "usstats/v1/usstats.proto"},
 			{RegistryName: "usstats.v2.StatsAPI.fds", ProtoPath: "usstats/v2/usstats.proto"},
 			{RegistryName: "fileservice.v1.FileAPI.fds", ProtoPath: "fileservice/v1/fileservice.proto"},
 		},
-	}, &defaulthandlers.DefaultProvider{})
+	}, &defaulthandlers.DefaultProvider{}, lsm.New(descriptorSetDir))
 
 	if err != nil {
 		panic(err)

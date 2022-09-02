@@ -15,7 +15,7 @@ type HandlerProvider interface {
 }
 
 type SchemaRegistry interface {
-	Get(registryName string, protoFile string) *protoreflect.FileDescriptor
+	Get(registryName string, protoFile string) (protoreflect.FileDescriptor, error)
 }
 
 type Handler interface {
@@ -30,8 +30,7 @@ type EndpointContext struct {
 }
 
 type ServerConfig struct {
-	DescriptorSetDir *string
-	Services         []ServiceConfig
+	Services []ServiceConfig
 }
 type ServiceConfig struct {
 	RegistryName string

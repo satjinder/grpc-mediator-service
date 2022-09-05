@@ -139,32 +139,49 @@ The mediator service uses the descriptor sets to discover endpoint definitions o
 
 #### 2. Specify required handlers in the endpoint options
 
-#### 3. Generate descriptor files and add to the schema registry
+#### 3. Generate schema registry
 
-Generate descriptor files and store the output in the schema registry file. Following commands generate a descriptors for a sample file and add them to the registry folder
-
-- go to med8r folder and run following command
-- generate file descriptor set for stats.proto and usstats.proto
+##### Local Schema Registry
 
 ```sh
-buf build --type "med8r.schemas.samples.fileservice.v1.FileAPI" -o "gen/descriptor-sets/fileservice.v1.FileAPI.fds" --as-file-descriptor-set 
-buf build --type "med8r.schemas.samples.usstats.v1.StatsAPI" -o "gen/descriptor-sets/usstats.v1.StatsAPI.fds" --as-file-descriptor-set
-buf build --type "med8r.schemas.samples.usstats.v2.StatsAPI" -o "gen/descriptor-sets/usstats.v2.StatsAPI.fds" --as-file-descriptor-set
+cd schemas
+
+buf generate
+
+buf build --type "med8r.schemas.testservcies.usstats.v1.StatsAPI" -o "gen/descriptor-sets/usstats.v1.StatsAPI.fds" --as-file-descriptor-set 
+buf build --type "med8r.schemas.testservcies.usstats.v2.StatsAPI" -o "gen/descriptor-sets/usstats.v2.StatsAPI.fds" --as-file-descriptor-set 
 ```
 
+
+##### BUF Schema Registry
+```sh
+cd schemas\med8r
+buf push
+
+cd schemas\testservices
+buf push
+
+```
 ## Test
 
 ```sh
-go test ./...
+cd med8r
+go test ./genericserver
 ```
 ## Run
 
 ```sh
 # run the server
-go run ./cmd/gserver
+cd server
+# to run with BSR
+go run ./cmd/server --schema=buf
+# OR to run with local schema registry
+go run ./cmd/server --schema=local
 
 # run the client (in another terminal)
+cd client
 go run ./cmd/gclient
+
 ```
 
 client will call server with its proto definition will get response in expected proto

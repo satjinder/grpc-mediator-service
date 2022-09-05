@@ -174,9 +174,9 @@ go test ./genericserver
 # run the server
 cd server
 # to run with BSR
-go run ./cmd/withbsr 
+go run ./cmd/server --schema=buf
 # OR to run with local schema registry
-go run ./cmd/withlocal
+go run ./cmd/server --schema=local
 
 # run the client (in another terminal)
 cd client

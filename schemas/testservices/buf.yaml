@@ -1,0 +1,10 @@
+version: v1
+name: buf.build/satjinder/med8rtestservices
+lint:
+  use:
+    - DEFAULT
+breaking:
+  use:
+    - FILE
+deps:
+  - buf.build/satjinder/med8r
